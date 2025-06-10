@@ -20,7 +20,7 @@ function calculateAndOffsetDate(oldDate, newDate, offsetDate, timeString) {
     offsetDateObj.setHours(0, 0, 0, 0);
   }
 
-  // Updated the comment : MS 2025-06-10 16:15
+  // Updated the comment : MS 2025-06-10 16:17
   // Get the ISO string
   const isoString = offsetDateObj.toISOString();
 
