@@ -8,7 +8,6 @@ function gitBlobSha(fileContent) {
   // Use Node.js's built-in crypto library to calculate the SHA-1 hash.
   const crypto = require('crypto');
   const sha1 = crypto.createHash('sha1').update(dataToHash, 'utf8').digest('hex');
-  
-  // This sha1 should match that of a real GitHub value - needs to be validated!
+
   return sha1;
 }
