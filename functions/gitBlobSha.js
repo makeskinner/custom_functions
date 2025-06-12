@@ -9,6 +9,6 @@ function gitBlobSha(fileContent) {
   const crypto = require('crypto');
   const sha1 = crypto.createHash('sha1').update(dataToHash, 'utf8').digest('hex');
   
-  // This sha1 should match that of a real GitHub value
+  // This sha1 should match that of a real GitHub value - needs to be validated!
   return sha1;
 }
