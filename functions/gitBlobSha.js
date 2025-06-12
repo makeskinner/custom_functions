@@ -9,5 +9,6 @@ function gitBlobSha(fileContent) {
   const crypto = require('crypto');
   const sha1 = crypto.createHash('sha1').update(dataToHash, 'utf8').digest('hex');
 
+  // Return the Final SHA1 value
   return sha1;
 }
