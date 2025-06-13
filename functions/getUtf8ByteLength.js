@@ -21,8 +21,3 @@ function getUtf8ByteLength(str) {
   }
   return byteLength;
 }
-
-// This line makes the function available to other files that 'require' it.
-// This enables debugging the script in run tests with tools like Sublimetext.
-// Comment out when committing, otherwise Make will throw an error!
-// module.exports = getUtf8ByteLength;
