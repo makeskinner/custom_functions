@@ -21,7 +21,7 @@ function getUtf8ByteLength(str) {
   }
   return byteLength;
 }
-// Remove 
+
 // This line makes the function available to other files that 'require' it.
 // Comment out when committing, otherwise Make will throw an error!
 // module.exports = getUtf8ByteLength;
