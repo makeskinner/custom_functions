@@ -1,5 +1,5 @@
-// This function calculates the UTF-8 byte length of a string.
 function getUtf8ByteLength(str) {
+  // This function calculates the UTF-8 byte length of a string.
   if (typeof str !== 'string') {
     return 0; // Return 0 if input is not a string
   }
