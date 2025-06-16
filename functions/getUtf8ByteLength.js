@@ -19,6 +19,6 @@ function getUtf8ByteLength(str) {
       byteLength += 4;
     }
   }
-  // Return num bytes. Make's native modules handle the rest
+  // Return num bytes. Make's native modules handle the resty
   return byteLength;
 }
