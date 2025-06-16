@@ -19,6 +19,6 @@ function getUtf8ByteLength(str) {
       byteLength += 4;
     }
   }
-  // Return num bytes. Make's native modules again - 2
+  // Return num bytes. Make's native modules create GitHub SHA1 from this
   return byteLength;
 }
