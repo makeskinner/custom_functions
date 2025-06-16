@@ -19,6 +19,6 @@ function getUtf8ByteLength(str) {
       byteLength += 4;
     }
   }
-  // Return num bytes. Make's native modules
+  // Return num bytes. Make's native modules again
   return byteLength;
 }
