@@ -1,6 +1,6 @@
 function getUtf8ByteLength(str) {
   // This function calculates the UTF-8 byte length of a string.
-  // The Make scenario will trnasform this into a GitHub type SHA1 string
+  // The Make scenario will transform this into a GitHub type SHA1 string
   if (typeof str !== 'string') {
     return 0; // Return 0 if input is not a string
   }
