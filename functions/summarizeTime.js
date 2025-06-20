@@ -5,11 +5,11 @@
  * single top-level function, making it safe and compatible with sandpit environments
  * like Make.com's "Run a function" modules.
  *
- * @param {Array<Object>} data An array where each object represents a user's
- * time entries, with a 'User' key for the user's name
- * and a 'TimeEnties' array containing their individual
- * time records.
- * Example: [{ "User": "J Helyes", "TimeEnties": [...] }]
+ * @param {Array<Object>|Object} data Can be either an array where each object
+ * represents a user's time entries, or a single user object if Make.com
+ * is iterating over an array and passing individual items.
+ * Example Array: [{ "User": "J Helyes", "TimeEnties": [...] }]
+ * Example Single Object: { "User": "J Helyes", "TimeEnties": [...] }
  * @returns {Object} A comprehensive summary object with calculated hours in HH:MM format.
  * Includes total and billable hours per user, daily breakdowns,
  * and duration per project and client.
@@ -36,13 +36,22 @@ function summarizeTime(data) {
         return `${formattedHours}:${formattedMinutes}`;
     }
 
+    // Ensure 'data' is always an array for iteration, whether it's a single object or already an array.
+    const processedData = Array.isArray(data) ? data : [data];
+
     const summary = {};
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-    data.forEach(userEntry => {
+    processedData.forEach(userEntry => { // Now safe to use forEach
         // Use 'User' and 'TimeEnties' keys as per your latest JSON structure
         const userName = userEntry.User;
         const timeEntries = userEntry.TimeEnties;
+
+        // Skip if userName or timeEntries are unexpectedly missing or not an array
+        if (!userName || !Array.isArray(timeEntries)) {
+            console.warn(`Skipping malformed user entry: ${JSON.stringify(userEntry)}`);
+            return; // Skip to the next user entry
+        }
 
         summary[userName] = {
             totalDurationMs: 0,
