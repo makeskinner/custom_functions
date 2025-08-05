@@ -44,8 +44,8 @@ const mappable_column_values = {
     "lookup_mksewh5b": "Done, Done, Working on it, Done"
 };
 
-const category = categorizeStatus(mappable_column_values.lookup_mksewh5b);
-console.log(category)
+// const category = categorizeStatus(mappable_column_values.lookup_mksewh5b);
+// console.log(category)
 // Expected output for this example: "Not Started"
 // To use in Make, you would pass the mapped value to the function.
 // For example: return categorizeStatus(input.mappable_column_values.lookup_mksewh5b);
