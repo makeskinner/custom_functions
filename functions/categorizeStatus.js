@@ -1,3 +1,4 @@
+// Great new function
 function categorizeStatus(csvString) {
   // Return "Not Started" if the input is empty, null, or undefined.
   if (!csvString) {
@@ -38,14 +39,3 @@ function categorizeStatus(csvString) {
   // A fallback for any unexpected combination of statuses.
   return "Undefined";
 }
-
-// Example usage with the provided object's value:
-const mappable_column_values = {
-    "lookup_mksewh5b": "Done, Done, Working on it, Done"
-};
-
-const category = categorizeStatus(mappable_column_values.lookup_mksewh5b);
-console.log(category)
-// Expected output for this example: "Not Started"
-// To use in Make, you would pass the mapped value to the function.
-// For example: return categorizeStatus(input.mappable_column_values.lookup_mksewh5b);
