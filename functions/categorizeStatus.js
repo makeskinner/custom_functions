@@ -1,3 +1,5 @@
+// This is a new custom function 
+
 function categorizeStatus(csvString) {
   // Return "Not Started" if the input is empty, null, or undefined.
   if (!csvString) {
