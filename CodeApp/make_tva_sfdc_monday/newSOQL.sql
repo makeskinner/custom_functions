@@ -117,3 +117,13 @@ WHERE Id IN (
     AND IsClosed = false
     AND StageName NOT IN ('Rejected', 'Profile')
 )
+AND imt_Make_Lead_VE__r.Email IN (
+    'a.paul@make.com',
+    'o.chekalov@make.com',
+    'c.quiros@make.com',
+    'a.christuraj@make.com',
+    'j.kiunke@make.com',
+    'l.martins@make.com',
+    'm.skinner@make.com',
+    'r.rammal@make.com'
+)
