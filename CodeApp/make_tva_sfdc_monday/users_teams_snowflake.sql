@@ -29,7 +29,7 @@ LEFT JOIN MAKE_DATA.SERVING_GDPR.SRV_GDPR_ENRICHED_USER_DAY enr
 LEFT JOIN MAKE_DATA.DWH.DIM_USER u
     ON bus.USER_ID = u.USER_ID
     AND u.IS_LAST_VERSION = 1
-WHERE f.ORG_ID = '{{119.SalesforceBundle.Make_LifeCycles__r.records[].imt_Make_OrgId__c}}'
+WHERE f.ORG_ID = CONCAT('m_', '{{119.SalesforceBundle.Make_LifeCycles__r.records[].imt_Make_OrgId__c}}')
     AND enr.EMAIL_ADDRESS IS NOT NULL
     AND TRIM(enr.EMAIL_ADDRESS) != ''
     AND LOWER(TRIM(enr.EMAIL_ADDRESS)) != 'undefined'
