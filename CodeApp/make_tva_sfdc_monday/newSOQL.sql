@@ -30,11 +30,6 @@ SELECT
          imt_Churn_Status__c, 
          imt_Churn_Reason__c, 
          imt_Make_Estimated_Churn_Value__c
-         (
-             SELECT UserId, TeamMemberRole
-             FROM OpportunityTeamMembers
-             WHERE UserId = '{{103.markskinnerteammemberid}}'
-         )
      FROM
          Opportunities 
      WHERE
@@ -90,20 +85,28 @@ SELECT
    ),
    (
       SELECT
-         Id, Subject, StartDateTime, Activity_Type__c, Activity_Date__c, Delivered__c, Owner.Name
+         Id,
+         Subject,
+         StartDateTime,
+         EndDateTime,
+         Activity_Type__c,
+         Activity_Date__c,
+         Delivered__c,
+         Location,
+         Owner.Name,
+         TYPEOF Who
+             WHEN Contact THEN Name, Email
+             WHEN Lead THEN Name, Email
+         END
       FROM
          Events 
       WHERE
-         (Owner.Name = 'Mark Skinner')
-         AND (NOT Owner.Name LIKE '%Paula Materin%')
-         AND Activity_Date__c >= {{formatDate(addMonths(now; -12); "YYYY-MM-DD")}} 
-         AND Activity_Date__c <= {{formatDate(addDays(now; 60); "YYYY-MM-DD")}} 
+         Activity_Date__c >= {{formatDate(addMonths(now; -12); "YYYY-MM-DD")}}
+         AND Activity_Date__c <= {{formatDate(addDays(now; 60); "YYYY-MM-DD")}}
    )
 FROM
    Account 
-WHERE
-   imt_Make_Lead_VE__c = '{{103.markskinnerteammemberid}}'
-AND Id IN (
+WHERE Id IN (
     SELECT AccountId 
     FROM Opportunity 
     WHERE Celonis_Business_Unit__c = 'Integromat/Make'
