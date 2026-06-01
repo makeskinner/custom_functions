@@ -422,6 +422,7 @@ function transformOpportunities(accountsArray) {
         churnRiskStatus: get(opp, 'imt_Churn_Risk__c') ? String(get(opp, 'imt_Churn_Risk__c')).toUpperCase() : null, 
         churnStatus: get(opp, 'imt_Churn_Status__c'),
         churnReason: get(opp, 'imt_Churn_Reason__c'),
+        churnRequestDetails: get(opp, 'imt_Churn_Request_Details__c') || "",
         churnValue: get(opp, 'imt_Make_Estimated_Churn_Value__c', 0),
 
         // BLOCK 9: SALES METADATA
@@ -438,6 +439,8 @@ function transformOpportunities(accountsArray) {
         executiveSummary: get(opp, 'Executive_Summary__c') || "",
         notes: get(opp, 'imt_Notes__c') || "",
         nextStep: get(opp, 'Next_Step__c') || "",
+        preSalesNextSteps: get(opp, 'imt_Pre_Sales_Next_Steps__c') || "",
+        preSalesConfidence: get(opp, 'imt_Pre_Sales_confidence_for_Quarter__c') || "",
         techRisksGaps: get(opp, 'imt_Tech_Risks_Gaps__c') || "",
 
         // BLOCK 11: FIRMOGRAPHICS & COUNTRY
