@@ -266,8 +266,20 @@ function transformOpportunities(accountsArray) {
     const teamSummaryForAgent = isLead ? [] : sfTeams.map(t => {
         const cL = getVal(t, 'CREDITS_LAST_MONTH'), c2 = getVal(t, 'CREDITS_2_MONTHS_AGO');
         totalL += cL; total2 += c2;
-        return { t: getString(t, 'TEAM_NAME'), c: cL, tr: (c2 > 0) ? Math.round(((cL - c2) / c2) * 100) : 0 };
+        return {
+            t:  getString(t, 'TEAM_NAME'),
+            c:  cL,
+            tr: (c2 > 0) ? Math.round(((cL - c2) / c2) * 100) : 0,
+            bf: getString(t, 'BUSINESS_FUNCTION') || null
+        };
     }).filter(t => t.c > 0);
+
+    // Derive distinct active business functions from team data
+    const activeFunctions = isLead ? '' : [...new Set(
+        teamSummaryForAgent
+            .map(t => t.bf)
+            .filter(bf => bf && bf.trim() !== '')
+    )].join(', ');
 
     const powerUserSummaryForAgent = isLead ? "No active usage" : sfUsers.slice(0, 3).map(u => {
         return `${getString(u, 'USER_NAME') || 'Unknown'} (${getString(u, 'USER_JOB_ROLE') || 'No Role'}): ${getVal(u, 'CREDITS_LAST_MONTH')} credits. Exp: ${getString(u, 'USER_AUTOMATION_EXPERIENCE') || 'Unknown'}`;
@@ -336,7 +348,7 @@ function transformOpportunities(accountsArray) {
         },
         tech: { apps: (get(primaryOrg, 'List_of_Apps_Used__c') || "None Listed"), isLead: isLead },
         ve:   { p: pastMeetingsL60D, d: workshopsDelivered, events: isTopOpp ? formattedEvents : [] },
-        snk:  { trend: overallTrend, credits: totalL, consumption: get(primaryOrg, 'imt_Exp_Consumption_End_Val_Period__c', 0), teams: teamSummaryForAgent, users: powerUserSummaryForAgent },
+        snk:  { trend: overallTrend, credits: totalL, consumption: get(primaryOrg, 'imt_Exp_Consumption_End_Val_Period__c', 0), teams: teamSummaryForAgent, users: powerUserSummaryForAgent, functions: activeFunctions },
         users: { active: nbUsersActive, total: nbUsersTotal, gap: (nbUsersTotal - nbUsersActive) }
     };
 
@@ -468,6 +480,7 @@ function transformOpportunities(accountsArray) {
 
         // THE AGENT BRAIN
         agent_payload_string: JSON.stringify(agentPayload),
+        activeFunctions: activeFunctions,
 
         // BLOCK 17: MONDAY COLUMN VALUES INPUT BUNDLE
         // Pre-packages all fields needed by BuildMondayColumnValues.js into a
