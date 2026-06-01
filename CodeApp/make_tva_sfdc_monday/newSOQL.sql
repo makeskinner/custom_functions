@@ -30,6 +30,11 @@ SELECT
          imt_Churn_Status__c, 
          imt_Churn_Reason__c, 
          imt_Make_Estimated_Churn_Value__c
+         (
+             SELECT UserId, TeamMemberRole
+             FROM OpportunityTeamMembers
+             WHERE UserId = '{{103.markskinnerteammemberid}}'
+         )
      FROM
          Opportunities 
      WHERE
