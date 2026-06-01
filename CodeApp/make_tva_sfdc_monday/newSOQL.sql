@@ -29,7 +29,10 @@ SELECT
          RecordType.Name,
          imt_Churn_Status__c, 
          imt_Churn_Reason__c, 
-         imt_Make_Estimated_Churn_Value__c
+         imt_Make_Estimated_Churn_Value__c,
+         imt_Pre_Sales_Next_Steps__c,
+         imt_Pre_Sales_confidence_for_Quarter__c,
+         imt_Churn_Request_Details__c
      FROM
          Opportunities 
      WHERE
