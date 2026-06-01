@@ -10,8 +10,23 @@ function extractSnowflakeData(inputArray) {
     return inputArray;
 }
 
-const sfTeams = extractSnowflakeData(input.snowflakeTeams);
-const sfUsers = extractSnowflakeData(input.snowflakeUsers);
+// Index all Snowflake data by org ID so multi-account runs get the right data per account
+const allSnowflakeTeams = extractSnowflakeData(input.snowflakeTeams);
+const allSnowflakeUsers = extractSnowflakeData(input.snowflakeUsers);
+
+const snowflakeTeamsByOrg = {};
+allSnowflakeTeams.forEach(t => {
+    const id = String(t.ORG_ID || t.org_id || '').replace(/^m_/, '');
+    if (!snowflakeTeamsByOrg[id]) snowflakeTeamsByOrg[id] = [];
+    snowflakeTeamsByOrg[id].push(t);
+});
+
+const snowflakeUsersByOrg = {};
+allSnowflakeUsers.forEach(u => {
+    const id = String(u.ORG_ID || u.org_id || '').replace(/^m_/, '');
+    if (!snowflakeUsersByOrg[id]) snowflakeUsersByOrg[id] = [];
+    snowflakeUsersByOrg[id].push(u);
+});
 
 /**
  * Calculates Management Priority based on Renewal, Consumption, and Score
@@ -235,7 +250,9 @@ function transformOpportunities(accountsArray) {
         };
     });
 
-    // --- PHASE 3: SNOWFLAKE SYNTHESIS (account-level) ---
+    // --- PHASE 3: SNOWFLAKE SYNTHESIS (account-level, per-org lookup) ---
+    const sfTeams = snowflakeTeamsByOrg[String(orgIdRaw)] || [];
+    const sfUsers = snowflakeUsersByOrg[String(orgIdRaw)] || [];
     let totalL = 0, total2 = 0;
     const teamSummaryForAgent = isLead ? [] : sfTeams.map(t => {
         const cL = getVal(t, 'CREDITS_LAST_MONTH'), c2 = getVal(t, 'CREDITS_2_MONTHS_AGO');
@@ -530,4 +547,4 @@ function transformOpportunities(accountsArray) {
   return transformedItems;
 }
 
-return transformOpportunities([accountData]);
+return transformOpportunities(Array.isArray(accountData) ? accountData : [accountData]);
