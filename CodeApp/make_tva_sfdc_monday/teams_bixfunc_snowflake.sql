@@ -14,6 +14,6 @@ JOIN MAKE_DATA.DWH.DIM_TEAM t
 LEFT JOIN MAKE_DATA.DWH.DIM_SCENARIO_CATEGORIZATION sc
     ON f.ORG_SCN_ID = sc.ORG_SCN_ID
     AND sc.IS_LAST_VERSION = 1
-WHERE f.ORG_ID = '{{119.Make_LifeCycles__r.records[1].imt_Make_OrgId__c}}'
+WHERE f.ORG_ID = '{{119.SalesforceBundle.Make_LifeCycles__r.records[].imt_Make_OrgId__c}}'
 GROUP BY f.ORG_ID, t.NAME, sc.BUSINESS_FUNCTION
 ORDER BY total_credits DESC;
