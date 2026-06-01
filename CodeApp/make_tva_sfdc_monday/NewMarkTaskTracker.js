@@ -202,7 +202,16 @@ function transformOpportunities(accountsArray) {
     const makeMarket = deriveMakeMarket(billingCountryCode, billingCountryName);
 
     // --- PHASE 2: CONSOLIDATED EVENT ENGINE (account-level — processed once) ---
-    const eventRecords = get(account, 'Events.records', []);
+    // Filter events to those owned by the Lead VE for this account
+    // (SOQL can't do cross-object field references in subquery WHERE, so we filter here)
+    const leadVEName = get(account, 'imt_Make_Lead_VE__r.Name', '');
+    const allEventRecords = get(account, 'Events.records', []);
+    const eventRecords = leadVEName
+        ? allEventRecords.filter(e => {
+              const ownerName = get(e, 'Owner.Name') || get(e, 'OwnerId') || '';
+              return ownerName === leadVEName;
+          })
+        : allEventRecords;
     const now = new Date();
     const sixtyDaysAgo = new Date(); sixtyDaysAgo.setDate(now.getDate() - 60);
     const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(now.getDate() - 30);
