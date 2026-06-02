@@ -32,7 +32,8 @@ SELECT
          imt_Make_Estimated_Churn_Value__c,
          imt_Pre_Sales_Next_Steps__c,
          imt_Pre_Sales_confidence_for_Quarter__c,
-         imt_Churn_Request_Details__c
+         imt_Churn_Request_Details__c,
+         Renewal_Type__c
      FROM
          Opportunities 
      WHERE
