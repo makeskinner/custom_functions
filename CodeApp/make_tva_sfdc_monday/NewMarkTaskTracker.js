@@ -429,11 +429,11 @@ function transformOpportunities(accountsArray) {
         oppType: preciseOppType,
         recordType: ['Auto-Renewal', 'Manual Renewal'].includes(preciseOppType) ? 'O02' : (preciseOppType === 'Land' ? 'O04' : 'O04'),
         renewalType: (() => {
-            const sfVal = get(opp, 'Renewal_Type__c');
-            if (sfVal) return sfVal;
+            const sfVal = get(opp, 'Renewal_Type__c') || '';
             const name = get(opp, 'Name') || '';
-            if (/auto[\s-]?renewal/i.test(name)) return 'Auto-Renewal';
-            if (/manual[\s-]?renewal/i.test(name)) return 'Manual Renewal';
+            // Normalise to consistent values regardless of source
+            if (/auto.?renewal/i.test(sfVal) || /auto.?renewal/i.test(name)) return 'Auto-Renewal';
+            if (/manual.?renewal/i.test(sfVal) || /manual.?renewal/i.test(name)) return 'Manual Renewal';
             return '';
         })(),
         stageNameStatus: get(opp, 'StageName'),
