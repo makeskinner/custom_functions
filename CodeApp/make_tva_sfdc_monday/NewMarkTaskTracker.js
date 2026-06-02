@@ -427,7 +427,7 @@ function transformOpportunities(accountsArray) {
 
         // BLOCK 9: SALES METADATA
         oppType: preciseOppType,
-        recordType: get(opp, 'RecordType.DeveloperName') || get(opp, 'RecordType', {DeveloperName:''}).DeveloperName || '',
+        recordType: ['Auto-Renewal', 'Manual Renewal'].includes(preciseOppType) ? 'O02' : (preciseOppType === 'Land' ? 'O04' : 'O04'),
         renewalType: (() => {
             const sfVal = get(opp, 'Renewal_Type__c');
             if (sfVal) return sfVal;
