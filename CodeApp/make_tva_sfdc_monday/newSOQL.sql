@@ -33,7 +33,8 @@ SELECT
          imt_Pre_Sales_Next_Steps__c,
          imt_Pre_Sales_confidence_for_Quarter__c,
          imt_Churn_Request_Details__c,
-         Renewal_Type__c
+         Renewal_Type__c,
+         RecordType.DeveloperName
      FROM
          Opportunities 
      WHERE
