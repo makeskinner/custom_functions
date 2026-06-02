@@ -429,6 +429,9 @@ function transformOpportunities(accountsArray) {
         oppType: preciseOppType,
         recordType: ['Auto-Renewal', 'Manual Renewal'].includes(preciseOppType) ? 'O02' : (preciseOppType === 'Land' ? 'O04' : 'O04'),
         renewalType: (() => {
+            // Only classify renewalType for O02 record types — O04 opps with "Auto Renewal"
+            // in the name are data quality issues in Salesforce (e.g. DIGITALL)
+            if (preciseOppType !== 'Auto-Renewal' && preciseOppType !== 'Manual Renewal') return '';
             const sfVal = get(opp, 'Renewal_Type__c') || '';
             const name = get(opp, 'Name') || '';
             // Normalise to consistent values regardless of source
