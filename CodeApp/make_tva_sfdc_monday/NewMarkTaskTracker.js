@@ -427,7 +427,14 @@ function transformOpportunities(accountsArray) {
 
         // BLOCK 9: SALES METADATA
         oppType: preciseOppType,
-        renewalType: get(opp, 'Renewal_Type__c') || "",
+        renewalType: (() => {
+            const sfVal = get(opp, 'Renewal_Type__c');
+            if (sfVal) return sfVal;
+            const name = get(opp, 'Name') || '';
+            if (/auto[\s-]?renewal/i.test(name)) return 'Auto-Renewal';
+            if (/manual[\s-]?renewal/i.test(name)) return 'Manual Renewal';
+            return '';
+        })(),
         stageNameStatus: get(opp, 'StageName'),
         amountConvertedUSD: get(opp, 'AmountConvertedUSD__c', 0),
         sumRenewalAmount: get(primaryOrg, 'Sum_Renewal_Amount__c', 0),
@@ -506,7 +513,14 @@ function transformOpportunities(accountsArray) {
             leadVEManager:              get(account, 'imt_Make_Lead_VE__r.Manager.Name'),
             notOnOppTeamFlag:           false,
             oppType:                    preciseOppType,
-            renewalType:                get(opp, 'Renewal_Type__c') || "",
+            renewalType:                (() => {
+                const sfVal = get(opp, 'Renewal_Type__c');
+                if (sfVal) return sfVal;
+                const name = get(opp, 'Name') || '';
+                if (/auto[\s-]?renewal/i.test(name)) return 'Auto-Renewal';
+                if (/manual[\s-]?renewal/i.test(name)) return 'Manual Renewal';
+                return '';
+            })(),
             stageNameStatus:            get(opp, 'StageName'),
             calculatedPriority:         priorityVal,
             expansionLevel:             expansionLevel,
