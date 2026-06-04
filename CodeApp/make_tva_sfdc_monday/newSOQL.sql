@@ -121,14 +121,14 @@ WHERE Id IN (
     AND IsClosed = false
     AND StageName NOT IN ('Rejected', 'Profile')
 )
-AND imt_Make_Lead_VE__r.Email IN (
-    'a.paul@make.com',
-    'o.chekalov@make.com',
-    'c.quiros@make.com',
-    'a.christuraj@make.com',
-    'j.kiunke@make.com',
-    'l.martins@make.com',
-    'm.skinner@make.com',
-    'r.rammal@make.com'
+AND imt_Make_Lead_VE__c IN (
+    '00507000003ydG8AAI',
+    '00507000000gmN7AAI',
+    '005S70000049hMoIAI',
+    '00507000000hh37AAA',
+    '005ck00000J5WNkAAN',
+    '005ck000008XRkoAAG',
+    '005ck00000Kel1zAAB',
+    '00507000004S3rRAAS'
 )
-LIMIT 200
+LIMIT 2100
