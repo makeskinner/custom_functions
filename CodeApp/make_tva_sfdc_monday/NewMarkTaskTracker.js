@@ -235,7 +235,7 @@ function transformOpportunities(accountsArray) {
 
         if (eventDate) {
             if (eType.includes("Workshop")) {
-                if ((eDelivered === "Yes" || eventDate < now) && eventDate >= twoMonthsAgo) workshopsDelivered++;
+                if (eDelivered === "Yes" && eventDate >= twoMonthsAgo) workshopsDelivered++;
                 if (eDelivered === "Open" && eventDate >= now) workshopsPlanned++;
                 if (eDelivered === "Open" && eventDate >= now && eventDate <= twoMonthsFromNow) workshopsPlannedNext2M++;
             } else if (eType.includes("Meeting")) {
@@ -246,16 +246,17 @@ function transformOpportunities(accountsArray) {
             }
         }
         return {
-            sfId:         get(event, 'Id'),
-            subject:      get(event, 'Subject'),
-            type:         eType,
-            date:         eDateStr,
-            start:        get(event, 'StartDateTime'),
-            end:          get(event, 'EndDateTime'),
-            location:     get(event, 'Location'),
-            delivered:    eDelivered,
-            contactName:  get(event, 'Who.Name'),
-            contactEmail: get(event, 'Who.Email')
+            sfId:          get(event, 'Id'),
+            subject:       get(event, 'Subject'),
+            type:          eType,
+            date:          eDateStr,
+            start:         get(event, 'StartDateTime') || eDateStr,
+            end:           get(event, 'EndDateTime') || get(event, 'Activity_Date__c'),
+            location:      get(event, 'Location'),
+            delivered:     eDelivered,
+            deliveredDate: get(event, 'Delivered_Date__c'),
+            contactName:   get(event, 'Who.Name'),
+            contactEmail:  get(event, 'Who.Email')
         };
     });
 
