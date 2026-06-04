@@ -40,8 +40,12 @@ SELECT
      WHERE
          Celonis_Business_Unit__c = 'Integromat/Make'
          AND RecordType.DeveloperName IN ('O02', 'O04')
-         AND IsClosed = false
-         AND StageName NOT IN ('Rejected', 'Profile', 'Closed Lost', 'Closed Won')
+         AND (
+             (IsClosed = false AND StageName NOT IN ('Rejected', 'Profile'))
+             OR
+             (StageName = 'Closed Won' AND RecordType.DeveloperName = 'O04'
+              AND CloseDate >= 2026-02-01)
+         )
      ORDER BY
          AmountConvertedUSD__c DESC 
    ),
