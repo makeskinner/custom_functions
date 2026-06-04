@@ -39,7 +39,7 @@ SELECT
          Opportunities 
      WHERE
          Celonis_Business_Unit__c = 'Integromat/Make'
-         AND RecordType.DeveloperName IN ('O02', 'O03', 'O04')
+         AND RecordType.DeveloperName IN ('O02', 'O04')
          AND (
              (IsClosed = false AND StageName NOT IN ('Rejected', 'Profile'))
              OR
