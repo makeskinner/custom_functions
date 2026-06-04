@@ -113,15 +113,7 @@ SELECT
    )
 FROM
    Account 
-WHERE Id IN (
-    SELECT AccountId 
-    FROM Opportunity 
-    WHERE Celonis_Business_Unit__c = 'Integromat/Make'
-    AND RecordType.DeveloperName IN ('O02', 'O04')
-    AND IsClosed = false
-    AND StageName NOT IN ('Rejected', 'Profile')
-)
-AND imt_Make_Lead_VE__c IN (
+WHERE imt_Make_Lead_VE__c IN (
     '00507000003ydG8AAI',
     '00507000000gmN7AAI',
     '005S70000049hMoIAI',
