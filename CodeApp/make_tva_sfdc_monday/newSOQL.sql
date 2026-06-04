@@ -97,6 +97,8 @@ SELECT
          Activity_Type__c,
          Activity_Date__c,
          Delivered__c,
+         Delivered_Date__c,
+         DurationInMinutes,
          Location,
          Owner.Name,
          TYPEOF Who
