@@ -149,7 +149,8 @@ function transformOpportunities(accountsArray) {
 
   const oppRecords = get(account, 'Opportunities.records', []);
     if (oppRecords.length === 0) {
-        throw new Error(`CRITICAL_MISSING_OPPORTUNITY: No Opportunity found for ${get(account, 'Name')}.`);
+        // Account has no qualifying opps in the subquery — skip silently
+        continue;
     }
 
     const companyName = get(account, 'Name');
