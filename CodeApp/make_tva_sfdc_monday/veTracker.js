@@ -251,6 +251,7 @@ function transformOpportunities(accountsArray) {
             sfId:               get(event, 'Id'),
             subject:            get(event, 'Subject'),
             type:               eType,
+            status:             eDelivered,
             date:               eDateStr,
             start:              get(event, 'StartDateTime') || eDateStr,
             end:                get(event, 'EndDateTime') || get(event, 'Activity_Date__c'),
