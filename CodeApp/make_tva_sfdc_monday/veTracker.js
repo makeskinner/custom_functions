@@ -10,8 +10,23 @@ function extractSnowflakeData(inputArray) {
     return inputArray;
 }
 
-const sfTeams = extractSnowflakeData(input.snowflakeTeams);
-const sfUsers = extractSnowflakeData(input.snowflakeUsers);
+// Index all Snowflake data by org ID so multi-account runs get the right data per account
+const allSnowflakeTeams = extractSnowflakeData(input.snowflakeTeams);
+const allSnowflakeUsers = extractSnowflakeData(input.snowflakeUsers);
+
+const snowflakeTeamsByOrg = {};
+allSnowflakeTeams.forEach(t => {
+    const id = String(t.ORG_ID || t.org_id || '').replace(/^m_/, '');
+    if (!snowflakeTeamsByOrg[id]) snowflakeTeamsByOrg[id] = [];
+    snowflakeTeamsByOrg[id].push(t);
+});
+
+const snowflakeUsersByOrg = {};
+allSnowflakeUsers.forEach(u => {
+    const id = String(u.ORG_ID || u.org_id || '').replace(/^m_/, '');
+    if (!snowflakeUsersByOrg[id]) snowflakeUsersByOrg[id] = [];
+    snowflakeUsersByOrg[id].push(u);
+});
 
 /**
  * Calculates Management Priority based on Renewal, Consumption, and Score
@@ -134,7 +149,8 @@ function transformOpportunities(accountsArray) {
 
   const oppRecords = get(account, 'Opportunities.records', []);
     if (oppRecords.length === 0) {
-        throw new Error(`CRITICAL_MISSING_OPPORTUNITY: No Opportunity found for ${get(account, 'Name')}.`);
+        // Account has no qualifying opps in the subquery — skip silently
+        continue;
     }
 
     const companyName = get(account, 'Name');
@@ -187,7 +203,16 @@ function transformOpportunities(accountsArray) {
     const makeMarket = deriveMakeMarket(billingCountryCode, billingCountryName);
 
     // --- PHASE 2: CONSOLIDATED EVENT ENGINE (account-level — processed once) ---
-    const eventRecords = get(account, 'Events.records', []);
+    // Filter events to those owned by the Lead VE for this account
+    // (SOQL can't do cross-object field references in subquery WHERE, so we filter here)
+    const leadVEName = get(account, 'imt_Make_Lead_VE__r.Name', '');
+    const allEventRecords = get(account, 'Events.records', []);
+    const eventRecords = leadVEName
+        ? allEventRecords.filter(e => {
+              const ownerName = get(e, 'Owner.Name') || get(e, 'OwnerId') || '';
+              return ownerName === leadVEName;
+          })
+        : allEventRecords;
     const now = new Date();
     const sixtyDaysAgo = new Date(); sixtyDaysAgo.setDate(now.getDate() - 60);
     const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(now.getDate() - 30);
@@ -211,10 +236,11 @@ function transformOpportunities(accountsArray) {
 
         if (eventDate) {
             if (eType.includes("Workshop")) {
-                if ((eDelivered === "Yes" || eventDate < now) && eventDate >= twoMonthsAgo) workshopsDelivered++;
-                if (eDelivered === "Open" && eventDate >= now) workshopsPlanned++;
-                if (eDelivered === "Open" && eventDate >= now && eventDate <= twoMonthsFromNow) workshopsPlannedNext2M++;
-            } else if (eType.includes("Meeting")) {
+            const isRejected = get(event, 'Approval_Status__c') === 'Rejected';
+            if (!isRejected && eDelivered === "Yes" && eventDate >= twoMonthsAgo) workshopsDelivered++;
+            if (!isRejected && eDelivered === "Open" && eventDate >= now) workshopsPlanned++;
+            if (!isRejected && eDelivered === "Open" && eventDate >= now && eventDate <= twoMonthsFromNow) workshopsPlannedNext2M++;
+        } else if (eType.includes("Meeting")) {
                 if (eventDate >= sixtyDaysAgo && eventDate < now) pastMeetingsL60D++;
                 if (eventDate >= thirtyDaysAgo && eventDate < now) pastMeetingsL30D++;
                 if (eventDate >= twelveMonthsAgo && eventDate < now) pastMeetingsL12M++;
@@ -222,26 +248,44 @@ function transformOpportunities(accountsArray) {
             }
         }
         return {
-            sfId:         get(event, 'Id'),
-            subject:      get(event, 'Subject'),
-            type:         eType,
-            date:         eDateStr,
-            start:        get(event, 'StartDateTime'),
-            end:          get(event, 'EndDateTime'),
-            location:     get(event, 'Location'),
-            delivered:    eDelivered,
-            contactName:  get(event, 'Who.Name'),
-            contactEmail: get(event, 'Who.Email')
+            sfId:               get(event, 'Id'),
+            subject:            get(event, 'Subject'),
+            type:               eType,
+            date:               eDateStr,
+            start:              get(event, 'StartDateTime') || eDateStr,
+            end:                get(event, 'EndDateTime') || get(event, 'Activity_Date__c'),
+            location:           get(event, 'Location'),
+            delivered:          eDelivered,
+            deliveredDate:      get(event, 'Delivered_Date__c'),
+            contactName:        get(event, 'Who.Name'),
+            contactEmail:       get(event, 'Who.Email'),
+            approvalStatus:     get(event, 'Approval_Status__c'),
+            rejectionCount:     get(event, 'Rejection_Count__c'),
+            rejectedComments:   get(event, 'Rejected_Comments__c')
         };
     });
 
-    // --- PHASE 3: SNOWFLAKE SYNTHESIS (account-level) ---
+    // --- PHASE 3: SNOWFLAKE SYNTHESIS (account-level, per-org lookup) ---
+    const sfTeams = snowflakeTeamsByOrg[String(orgIdRaw)] || [];
+    const sfUsers = snowflakeUsersByOrg[String(orgIdRaw)] || [];
     let totalL = 0, total2 = 0;
     const teamSummaryForAgent = isLead ? [] : sfTeams.map(t => {
         const cL = getVal(t, 'CREDITS_LAST_MONTH'), c2 = getVal(t, 'CREDITS_2_MONTHS_AGO');
         totalL += cL; total2 += c2;
-        return { t: getString(t, 'TEAM_NAME'), c: cL, tr: (c2 > 0) ? Math.round(((cL - c2) / c2) * 100) : 0 };
+        return {
+            t:  getString(t, 'TEAM_NAME'),
+            c:  cL,
+            tr: (c2 > 0) ? Math.round(((cL - c2) / c2) * 100) : 0,
+            bf: getString(t, 'BUSINESS_FUNCTION') || null
+        };
     }).filter(t => t.c > 0);
+
+    // Derive distinct active business functions from team data
+    const activeFunctions = isLead ? '' : [...new Set(
+        teamSummaryForAgent
+            .map(t => t.bf)
+            .filter(bf => bf && bf.trim() !== '')
+    )].join(', ');
 
     const powerUserSummaryForAgent = isLead ? "No active usage" : sfUsers.slice(0, 3).map(u => {
         return `${getString(u, 'USER_NAME') || 'Unknown'} (${getString(u, 'USER_JOB_ROLE') || 'No Role'}): ${getVal(u, 'CREDITS_LAST_MONTH')} credits. Exp: ${getString(u, 'USER_AUTOMATION_EXPERIENCE') || 'Unknown'}`;
@@ -310,7 +354,7 @@ function transformOpportunities(accountsArray) {
         },
         tech: { apps: (get(primaryOrg, 'List_of_Apps_Used__c') || "None Listed"), isLead: isLead },
         ve:   { p: pastMeetingsL60D, d: workshopsDelivered, events: isTopOpp ? formattedEvents : [] },
-        snk:  { trend: overallTrend, credits: totalL, consumption: get(primaryOrg, 'imt_Exp_Consumption_End_Val_Period__c', 0), teams: teamSummaryForAgent, users: powerUserSummaryForAgent },
+        snk:  { trend: overallTrend, credits: totalL, consumption: get(primaryOrg, 'imt_Exp_Consumption_End_Val_Period__c', 0), teams: teamSummaryForAgent, users: powerUserSummaryForAgent, functions: activeFunctions },
         users: { active: nbUsersActive, total: nbUsersTotal, gap: (nbUsersTotal - nbUsersActive) }
     };
 
@@ -384,10 +428,23 @@ function transformOpportunities(accountsArray) {
         churnRiskStatus: get(opp, 'imt_Churn_Risk__c') ? String(get(opp, 'imt_Churn_Risk__c')).toUpperCase() : null, 
         churnStatus: get(opp, 'imt_Churn_Status__c'),
         churnReason: get(opp, 'imt_Churn_Reason__c'),
+        churnRequestDetails: get(opp, 'imt_Churn_Request_Details__c') || "",
         churnValue: get(opp, 'imt_Make_Estimated_Churn_Value__c', 0),
 
         // BLOCK 9: SALES METADATA
         oppType: preciseOppType,
+        recordType: ['Auto-Renewal', 'Manual Renewal'].includes(preciseOppType) ? 'O02' : (preciseOppType === 'Land' ? 'O04' : 'O04'),
+        renewalType: (() => {
+            // Only classify renewalType for O02 record types — O04 opps with "Auto Renewal"
+            // in the name are data quality issues in Salesforce (e.g. DIGITALL)
+            if (preciseOppType !== 'Auto-Renewal' && preciseOppType !== 'Manual Renewal') return '';
+            const sfVal = get(opp, 'Renewal_Type__c') || '';
+            const name = get(opp, 'Name') || '';
+            // Normalise to consistent values regardless of source
+            if (/auto.?renewal/i.test(sfVal) || /auto.?renewal/i.test(name)) return 'Auto-Renewal';
+            if (/manual.?renewal/i.test(sfVal) || /manual.?renewal/i.test(name)) return 'Manual Renewal';
+            return '';
+        })(),
         stageNameStatus: get(opp, 'StageName'),
         amountConvertedUSD: get(opp, 'AmountConvertedUSD__c', 0),
         sumRenewalAmount: get(primaryOrg, 'Sum_Renewal_Amount__c', 0),
@@ -400,6 +457,8 @@ function transformOpportunities(accountsArray) {
         executiveSummary: get(opp, 'Executive_Summary__c') || "",
         notes: get(opp, 'imt_Notes__c') || "",
         nextStep: get(opp, 'Next_Step__c') || "",
+        preSalesNextSteps: get(opp, 'imt_Pre_Sales_Next_Steps__c') || "",
+        preSalesConfidence: get(opp, 'imt_Pre_Sales_confidence_for_Quarter__c') || "",
         techRisksGaps: get(opp, 'imt_Tech_Risks_Gaps__c') || "",
 
         // BLOCK 11: FIRMOGRAPHICS & COUNTRY
@@ -442,6 +501,7 @@ function transformOpportunities(accountsArray) {
 
         // THE AGENT BRAIN
         agent_payload_string: JSON.stringify(agentPayload),
+        activeFunctions: activeFunctions,
 
         // BLOCK 17: MONDAY COLUMN VALUES INPUT BUNDLE
         // Pre-packages all fields needed by BuildMondayColumnValues.js into a
@@ -463,6 +523,14 @@ function transformOpportunities(accountsArray) {
             leadVEManager:              get(account, 'imt_Make_Lead_VE__r.Manager.Name'),
             notOnOppTeamFlag:           false,
             oppType:                    preciseOppType,
+            renewalType:                (() => {
+                const sfVal = get(opp, 'Renewal_Type__c');
+                if (sfVal) return sfVal;
+                const name = get(opp, 'Name') || '';
+                if (/auto[\s-]?renewal/i.test(name)) return 'Auto-Renewal';
+                if (/manual[\s-]?renewal/i.test(name)) return 'Manual Renewal';
+                return '';
+            })(),
             stageNameStatus:            get(opp, 'StageName'),
             calculatedPriority:         priorityVal,
             expansionLevel:             expansionLevel,
@@ -530,4 +598,8 @@ function transformOpportunities(accountsArray) {
   return transformedItems;
 }
 
-return transformOpportunities([accountData]);
+const accountsArray = (accountData && accountData.sfdcResults)
+    ? accountData.sfdcResults
+    : (Array.isArray(accountData) ? accountData : [accountData]);
+
+return transformOpportunities(accountsArray);

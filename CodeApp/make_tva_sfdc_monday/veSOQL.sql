@@ -29,14 +29,22 @@ SELECT
          RecordType.Name,
          imt_Churn_Status__c, 
          imt_Churn_Reason__c, 
-         imt_Make_Estimated_Churn_Value__c
+         imt_Make_Estimated_Churn_Value__c,
+         imt_Pre_Sales_Next_Steps__c,
+         imt_Pre_Sales_confidence_for_Quarter__c,
+         imt_Churn_Request_Details__c,
+         Renewal_Type__c,
+         RecordType.DeveloperName
      FROM
          Opportunities 
      WHERE
-         Celonis_Business_Unit__c = 'Integromat/Make'
-         AND RecordType.DeveloperName IN ('O02', 'O04')
-         AND IsClosed = false
-         AND StageName NOT IN ('Rejected', 'Profile', 'Closed Lost', 'Closed Won')
+         RecordType.DeveloperName IN ('O02', 'O04')
+         AND (
+             (IsClosed = false AND StageName NOT IN ('Rejected', 'Profile'))
+             OR
+             (StageName = 'Closed Won' AND RecordType.DeveloperName = 'O04'
+              AND CloseDate >= 2026-02-01)
+         )
      ORDER BY
          AmountConvertedUSD__c DESC 
    ),
@@ -85,27 +93,30 @@ SELECT
    ),
    (
       SELECT
-        Id,
-        Subject,
-        StartDateTime,
-        EndDateTime,
-        Activity_Type__c,
-        Activity_Date__c,
-        Delivered__c,
-        Location,
-        TYPEOF Who
-            WHEN Contact THEN Name, Email
-            WHEN Lead THEN Name, Email
-        END
+         Id,
+         Subject,
+         StartDateTime,
+         EndDateTime,
+         Activity_Type__c,
+         Activity_Date__c,
+         Delivered__c,
+         Delivered_Date__c,
+         DurationInMinutes,
+         Location,
+         Approval_Status__c,
+         Rejection_Count__c,
+         Rejected_Comments__c,
+         Owner.Name,
+         TYPEOF Who
+             WHEN Contact THEN Name, Email
+             WHEN Lead THEN Name, Email
+         END
       FROM
          Events 
-      WHERE Activity_Date__c >= {{formatDate(addMonths(now; -12); "YYYY-MM-DD")}}
+      WHERE
+         Activity_Date__c >= {{formatDate(addMonths(now; -12); "YYYY-MM-DD")}}
          AND Activity_Date__c <= {{formatDate(addDays(now; 60); "YYYY-MM-DD")}}
    )
 FROM
    Account 
-WHERE Id IN (SELECT AccountId FROM Opportunity
-  WHERE Celonis_Business_Unit__c = 'Integromat/Make'
-  AND RecordType.DeveloperName IN ('O02', 'O04')
-  AND IsClosed = false
-  AND StageName NOT IN ('Rejected', 'Profile'))
+WHERE imt_Make_Lead_VE__c = '{{135.Id}}'
