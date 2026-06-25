@@ -1,6 +1,4 @@
 const accountData = input.inputData;
-const windowStart = input.priorityWindowStart; 
-const windowEnd = input.priorityWindowEnd;
 
 // --- STEP 1: BULLETPROOF SNOWFLAKE EXTRACTION ---
 // Handles both flat array and nested .rows formats
@@ -29,24 +27,36 @@ allSnowflakeUsers.forEach(u => {
 });
 
 /**
- * Calculates Management Priority based on Renewal, Consumption, and Score
+ * Calculates Management Priority based on Renewal (H1/H2), Consumption, and Score.
+ * Updated for Make.com FY27 Framework (Feb 1, 2026 - Jan 31, 2027).
  */
-function calculateManagementPriority(renewalDateStr, expConsumption, expScore, startStr, endStr) {
-    if (!renewalDateStr || !startStr || !endStr) return "None";
-    const renewalDate = new Date(renewalDateStr);
-    const wStart = new Date(startStr);
-    const wEnd = new Date(endStr);
-    const isCriticalRenewal = (renewalDate >= wStart && renewalDate <= wEnd);
+function calculateManagementPriority(renewalDateStr, expConsumption, expScore) {
+    if (!renewalDateStr) return "None";
 
-    if (isCriticalRenewal) {
-        if (expConsumption > 79) return "Priority 1";
-        if (expConsumption >= 60) return "Priority 2";
-        if (expScore >= 0.4) return "Priority 3";
-        return "None";
+    const renewalDate = new Date(renewalDateStr);
+    
+    // Define Fiscal Year Boundaries for FY27
+    const fyStart = new Date('2026-02-01');
+    const h2Start = new Date('2026-08-01'); // H1 ends Jul 31; H2 starts Aug 1
+    const fyEnd   = new Date('2027-02-01'); // Next FY starts Feb 1, 2027
+
+    // Check if the renewal falls within the current fiscal year
+    const isRenewingThisYear = (renewalDate >= fyStart && renewalDate < fyEnd);
+    
+    // Check if the renewal falls strictly within H1 of this fiscal year
+    const isH1 = (renewalDate >= fyStart && renewalDate < h2Start);
+
+    if (isRenewingThisYear) {
+        if (isH1 && expConsumption > 80) return "Priority 1";
+        if (!isH1 && expConsumption > 80) return "Priority 2";
+        if (expScore >= 0.5) return "Priority 3";
     } else {
-        if (expScore > 0.4) return "Priority 4";
-        return "None";
+        // Accounts NOT renewing this fiscal year
+        if (expConsumption > 80) return "Priority 4";
+        if (expScore >= 0.4) return "Priority 5";
     }
+
+    return "None";
 }
 
 /**
@@ -293,11 +303,11 @@ function transformOpportunities(accountsArray) {
     }).join(' | ');
 
     const overallTrend = total2 > 0 ? Math.round(((totalL - total2) / total2) * 100) : 0;
+
     const priorityVal = calculateManagementPriority(
         get(account, 'Next_Renewal_Date__c'),
         get(primaryOrg, 'imt_Exp_Consumption_End_Val_Period__c', 0),
-        get(account, 'Make_Expansion_Score_RollUp__c', 0),
-        windowStart, windowEnd
+        get(account, 'Make_Expansion_Score_RollUp__c', 0)
     );
 
     const nbUsersActive = get(primaryOrg, 'imt_Org_Nb_Active_Users_Curr_Month__c', 0);
