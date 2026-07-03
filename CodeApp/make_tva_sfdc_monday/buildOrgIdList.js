@@ -1,10 +1,12 @@
 // Build Account ID list for the lifecycle SOQL query.
 // Runs after the Array Aggregator has collected all paginated account bundles.
-// Note: orgIdList is now built inside veTracker.js from the lifecycle records.
 //
 // Outputs:
 //   accountIdList — comma-separated quoted SFDC account IDs ('001...', ...)
 //   count         — number of accounts processed
+//
+// Note: orgIdList is now built in a separate JS module AFTER the lifecycle
+// SFDC query runs, since org IDs come from lifecycle records not account records.
 
 const accounts = Array.isArray(input.accounts) ? input.accounts : [input.accounts];
 
