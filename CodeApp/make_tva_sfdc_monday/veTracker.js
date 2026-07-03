@@ -169,8 +169,10 @@ function transformOpportunities(accountsArray) {
     const lifeCycles = get(account, 'Make_LifeCycles__r.records', []);
     const primaryOrg = lifeCycles[0] || {};
     const orgIdRaw = get(primaryOrg, 'imt_Make_OrgId__c');
-    const isLead = !orgIdRaw;
-    const sigmaId = orgIdRaw ? `m_${orgIdRaw}` : "N/A";
+    const isLead   = !orgIdRaw;
+    const sigmaId  = orgIdRaw ? `m_${orgIdRaw}` : "N/A";
+    const dealType = get(primaryOrg, 'Deal_Type__c', null);
+    const isMMS    = dealType === 'MMS';
 
     // --- ACCOUNT-LEVEL ROLLUP CONSUMPTION (authoritative for all account types) ---
     // These aggregate across ALL orgs (enterprise, partner multi-org, etc.)
@@ -459,6 +461,8 @@ function transformOpportunities(accountsArray) {
 
         // BLOCK 9: SALES METADATA
         oppType: preciseOppType,
+        dealType: dealType,
+        isMMS:    isMMS,
         recordType: ['Auto-Renewal', 'Manual Renewal'].includes(preciseOppType) ? 'O02' : (preciseOppType === 'Land' ? 'O04' : 'O04'),
         renewalType: (() => {
             // Only classify renewalType for O02 record types — O04 opps with "Auto Renewal"
