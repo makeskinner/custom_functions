@@ -419,7 +419,11 @@ function transformOpportunities(accountsArray) {
         // BLOCK 6: RAW USAGE
         activeScenariosCurrMonth: get(primaryOrg, 'imt_Org_Active_Scenarios_Curr_Month__c', 0),
         activeScenariosPrevMonth: get(primaryOrg, 'imt_Org_Active_Scenarios_Prev_Month__c', 0),
-        opsConsumedCurrMonth: get(primaryOrg, 'imt_Org_Ops_Consumed_Curr_Month__c', 0),
+        // For MMS accounts, ops are consumed against the license rather than
+        // the monthly counter — use Org_Ops_Consumption_from_License__c instead
+        opsConsumedCurrMonth: isMMS
+            ? get(primaryOrg, 'Org_Ops_Consumption_from_License__c', 0)
+            : get(primaryOrg, 'imt_Org_Ops_Consumed_Curr_Month__c', 0),
         opsConsumedPrevMonth: get(primaryOrg, 'imt_Org_Ops_Consumed_Prev_Month__c', 0),
         opsConsumedLast30d: get(primaryOrg, 'imt_Org_Ops_Consumed_Last_30d__c', 0),
         nbUsersCurrMonth: nbUsersTotal,
@@ -587,7 +591,7 @@ function transformOpportunities(accountsArray) {
             nbUsersPrevMonth:           get(primaryOrg, 'imt_Org_Nb_Users_Prev_Month__c', 0),
             nbUsersActive:              get(primaryOrg, 'imt_Org_Nb_Active_Users_Curr_Month__c', 0),
             trendNbUsers:               calcTrend(get(primaryOrg, 'imt_Org_Nb_Users_Curr_Month__c'), get(primaryOrg, 'imt_Org_Nb_Users_Prev_Month__c')),
-            opsConsumedCurrMonth:       get(primaryOrg, 'imt_Org_Ops_Consumed_Curr_Month__c', 0),
+            opsConsumedCurrMonth:       isMMS ? get(primaryOrg, 'Org_Ops_Consumption_from_License__c', 0) : get(primaryOrg, 'imt_Org_Ops_Consumed_Curr_Month__c', 0),
             opsConsumedPrevMonth:       get(primaryOrg, 'imt_Org_Ops_Consumed_Prev_Month__c', 0),
             trendOpsConsumed:           calcTrend(get(primaryOrg, 'imt_Org_Ops_Consumed_Curr_Month__c'), get(primaryOrg, 'imt_Org_Ops_Consumed_Prev_Month__c')),
             listOfAppsUsed:             get(primaryOrg, 'List_of_Apps_Used__c', "None (Pre-Adoption)"),
