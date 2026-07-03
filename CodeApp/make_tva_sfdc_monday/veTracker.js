@@ -165,8 +165,33 @@ function transformOpportunities(accountsArray) {
 
     const companyName = get(account, 'Name');
 
-    // --- STEP 2: SELECT PRIMARY ORG (account-level, shared across all opps) ---
-    const lifeCycles = get(account, 'Make_LifeCycles__r.records', []);
+    // --- STEP 2: INDEX LIFECYCLE RECORDS BY ACCOUNT ID ---
+// When lifecycleRecords is provided as a separate input (separate SFDC query
+// after pagination), use that. Otherwise fall back to the subquery records
+// embedded in the account (legacy path, kept for backward compatibility).
+const lifecyclesByAccount = {};
+if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) {
+    input.lifecycleRecords.forEach(lc => {
+        const acctId = lc.Account__c;
+        if (!acctId) return;
+        if (!lifecyclesByAccount[acctId]) lifecyclesByAccount[acctId] = [];
+        lifecyclesByAccount[acctId].push(lc);
+    });
+}
+    // --- SELECT PRIMARY ORG (account-level, shared across all opps) ---
+    // Use the separate lifecycle records input if available (preferred),
+    // otherwise fall back to the embedded Make_LifeCycles__r subquery.
+    const accountId   = get(account, 'Id');
+    const lcFromInput = lifecyclesByAccount[accountId];
+    const lifeCycles  = lcFromInput
+        ? [...lcFromInput].sort((a, b) => {
+            // Parent orgs (Parent_Org__c = null) first, then by usage score desc
+            const aIsParent = !a.Parent_Org__c ? 0 : 1;
+            const bIsParent = !b.Parent_Org__c ? 0 : 1;
+            if (aIsParent !== bIsParent) return aIsParent - bIsParent;
+            return (b.imt_Usage_Score__c || 0) - (a.imt_Usage_Score__c || 0);
+          })
+        : get(account, 'Make_LifeCycles__r.records', []);
     const primaryOrg = lifeCycles[0] || {};
     const orgIdRaw = get(primaryOrg, 'imt_Make_OrgId__c');
     const isLead   = !orgIdRaw;
@@ -400,6 +425,7 @@ function transformOpportunities(accountsArray) {
         // BLOCK 4: ORG CAPACITY & PLAN
         orgIdRaw: orgIdRaw || "LEAD_NO_ORG",
         orgZone: zoneNameRaw,
+        orgName: get(primaryOrg, 'imt_Org_Name__c', null),
         orgPlan: get(primaryOrg, 'imt_Org_Plan__c', "Prospect"),
         opsInPlan: acctTotalOpsInPlan != null
             ? acctTotalOpsInPlan
