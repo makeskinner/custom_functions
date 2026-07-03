@@ -11,6 +11,10 @@ SELECT
    imt_Company_Size__c,
    BillingCountry,
    BillingCountryCode,
+   imt_Total_credits_consumed__c,
+   imt_Total_number_of_credits_w_extras__c,
+   imt_Total_number_of_users__c,
+   imt_Active_Make_Plans__c,
    (
      SELECT
          Id, 
