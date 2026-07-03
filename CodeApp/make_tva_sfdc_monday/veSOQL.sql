@@ -11,7 +11,6 @@ SELECT
    imt_Company_Size__c,
    BillingCountry,
    BillingCountryCode,
-   imt_Active_Make_Plans__c,
    (
      SELECT
          Id, 
