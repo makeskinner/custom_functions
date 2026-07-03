@@ -442,12 +442,15 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
         extraOpsInPlan: get(primaryOrg, 'imt_Org_Extra_Ops_In_Plan__c', 0),
         opsLeftInPlan: get(primaryOrg, 'imt_Org_Ops_Left_In_Plan__c', 0),
         opsLeftInPlanWithExtra: get(primaryOrg, 'imt_Org_Ops_Left_In_Plan_w_Extra__c', 0),
-        // For MMS accounts, calculate consumption % from aggregated ops consumed vs parent plan capacity
-        // For standard accounts use the SFDC-provided imt_Exp_Consumption_End_Val_Period__c
+        // For MMS: calculate from aggregated ops consumed vs parent contract ops in plan
+        // Use Contract_Ops_In_Plan__c as it reflects the contracted amount more reliably
         expConsumption: (() => {
-            if (isMMS && mmsTotalOpsConsumed != null) {
-                const plan = get(primaryOrg, 'imt_Org_Ops_In_Plan__c', 0);
-                return plan > 0 ? Math.round((mmsTotalOpsConsumed / plan) * 100) : 0;
+            if (isMMS && mmsTotalOpsConsumed) {
+                const contractPlan = get(primaryOrg, 'Contract_Ops_In_Plan__c', 0)
+                    || get(primaryOrg, 'imt_Org_Ops_In_Plan__c', 0);
+                return contractPlan > 0
+                    ? Math.round((mmsTotalOpsConsumed / contractPlan) * 100)
+                    : 0;
             }
             return get(primaryOrg, 'imt_Exp_Consumption_End_Val_Period__c', 0);
         })(),
