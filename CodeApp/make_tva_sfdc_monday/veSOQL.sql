@@ -51,51 +51,6 @@ SELECT
    (
       SELECT
          Id,
-         imt_Make_OrgId__c,
-         imt_Org_Plan__c,
-         imt_Usage_Score__c,
-         imt_Org_Ops_In_Plan__c,
-         imt_Org_Ops_Left_In_Plan__c,
-         imt_Org_Ops_Left_In_Plan_w_Extra__c,
-         imt_Org_Extra_Ops_In_Plan__c,
-         imt_Exp_Consumption_End_Val_Period__c,
-         List_of_Apps_Used__c,
-         imt_FDESK_Company_URL__c,
-         imt_Org_Active_Scenarios_Curr_Month__c,
-         imt_Org_Active_Scenarios_Prev_Month__c,
-         imt_Org_Nb_Teams_Current_Month__c,
-         imt_Org_Nb_Teams_Previous_Month__c,
-         imt_Org_Nb_Users_Curr_Month__c,
-         imt_Org_Nb_Users_Prev_Month__c,
-         imt_Org_Nb_Active_Users_Curr_Month__c,
-         imt_Org_Ops_Consumed_Last_30d__c,
-         imt_Org_Ops_Consumed_Prev_Month__c,
-         imt_Org_Ops_Consumed_Curr_Month__c,
-         Contract_Duration__c,
-         Expansion_Potential__c,
-         Sum_Renewal_Amount__c,
-         Deal_Type__c,
-         Org_Ops_Consumption_from_License__c,
-         CSAT_Average__c,
-         CSAT_Count__c,
-         HealthScore_Average__c,
-         HealthScore_Count__c,
-         NPS_Average__c,
-         NPS_Count__c,
-         Nb_of_Open_Tickets__c,
-         Nb_of_Tickets__c,
-         imt_Org_Zone_Name__c
-      FROM
-         Make_LifeCycles__r 
-      WHERE
-         imt_Org_Plan__c = 'Enterprise' 
-         AND imt_Make_OrgId__c != null 
-      ORDER BY
-         imt_Usage_Score__c DESC LIMIT 1 
-   ),
-   (
-      SELECT
-         Id,
          Subject,
          StartDateTime,
          EndDateTime,
