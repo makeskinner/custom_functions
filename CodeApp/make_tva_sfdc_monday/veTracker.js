@@ -185,10 +185,15 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
     const lcFromInput = lifecyclesByAccount[accountId];
     const lifeCycles  = lcFromInput
         ? [...lcFromInput].sort((a, b) => {
-            // Parent orgs (Parent_Org__c = null) first, then by usage score desc
+            // 1. MMS deal type org always first (it's the account's primary org)
+            const aIsMMS = a.Deal_Type__c === 'MMS' ? 0 : 1;
+            const bIsMMS = b.Deal_Type__c === 'MMS' ? 0 : 1;
+            if (aIsMMS !== bIsMMS) return aIsMMS - bIsMMS;
+            // 2. Parent orgs (Parent_Org__c = null) before child orgs
             const aIsParent = !a.Parent_Org__c ? 0 : 1;
             const bIsParent = !b.Parent_Org__c ? 0 : 1;
             if (aIsParent !== bIsParent) return aIsParent - bIsParent;
+            // 3. Highest usage score wins
             return (b.imt_Usage_Score__c || 0) - (a.imt_Usage_Score__c || 0);
           })
         : get(account, 'Make_LifeCycles__r.records', []);
