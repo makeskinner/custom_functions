@@ -438,9 +438,7 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
         orgZone: zoneNameRaw,
         orgName: get(primaryOrg, 'imt_Org_Name__c', null),
         orgPlan: get(primaryOrg, 'imt_Org_Plan__c', "Prospect"),
-        opsInPlan: acctTotalOpsInPlan != null
-            ? acctTotalOpsInPlan
-            : get(primaryOrg, 'imt_Org_Ops_In_Plan__c', 0),
+        opsInPlan: get(primaryOrg, 'imt_Org_Ops_In_Plan__c', 0),
         extraOpsInPlan: get(primaryOrg, 'imt_Org_Extra_Ops_In_Plan__c', 0),
         opsLeftInPlan: get(primaryOrg, 'imt_Org_Ops_Left_In_Plan__c', 0),
         opsLeftInPlanWithExtra: get(primaryOrg, 'imt_Org_Ops_Left_In_Plan_w_Extra__c', 0),
