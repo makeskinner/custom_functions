@@ -210,6 +210,15 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
         ? lcFromInput.reduce((sum, lc) => sum + (lc.Org_Ops_Consumption_from_License__c || 0), 0)
         : null;
 
+    // Pre-compute MMS consumption % here, alongside mmsTotalOpsConsumed, while isMMS is certain
+    const mmsExpConsumptionPct = isMMS && mmsTotalOpsConsumed > 0
+        ? (() => {
+            const plan = get(primaryOrg, 'Contract_Ops_In_Plan__c', 0)
+                      || get(primaryOrg, 'imt_Org_Ops_In_Plan__c', 0);
+            return plan > 0 ? Math.round((mmsTotalOpsConsumed / plan) * 100) : 0;
+          })()
+        : null;
+
     // --- ZONE & DASHBOARD URL (account-level) ---
     const zoneNameRaw = get(primaryOrg, 'imt_Org_Zone_Name__c', 'us1');
     const lowerZone = zoneNameRaw.toLowerCase();
@@ -442,18 +451,9 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
         extraOpsInPlan: get(primaryOrg, 'imt_Org_Extra_Ops_In_Plan__c', 0),
         opsLeftInPlan: get(primaryOrg, 'imt_Org_Ops_Left_In_Plan__c', 0),
         opsLeftInPlanWithExtra: get(primaryOrg, 'imt_Org_Ops_Left_In_Plan_w_Extra__c', 0),
-        // For MMS: calculate from aggregated ops consumed vs parent contract ops in plan
-        // Use Contract_Ops_In_Plan__c as it reflects the contracted amount more reliably
-        expConsumption: (() => {
-            if (isMMS && mmsTotalOpsConsumed) {
-                const contractPlan = get(primaryOrg, 'Contract_Ops_In_Plan__c', 0)
-                    || get(primaryOrg, 'imt_Org_Ops_In_Plan__c', 0);
-                return contractPlan > 0
-                    ? Math.round((mmsTotalOpsConsumed / contractPlan) * 100)
-                    : 0;
-            }
-            return get(primaryOrg, 'imt_Exp_Consumption_End_Val_Period__c', 0);
-        })(),
+        expConsumption: mmsExpConsumptionPct !== null
+            ? mmsExpConsumptionPct
+            : get(primaryOrg, 'imt_Exp_Consumption_End_Val_Period__c', 0),
         listOfAppsUsed: get(primaryOrg, 'List_of_Apps_Used__c', "None (Pre-Adoption)"),
 
         // BLOCK 5: USAGE TRENDS
