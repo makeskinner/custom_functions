@@ -204,6 +204,12 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
     const dealType = get(primaryOrg, 'Deal_Type__c', null);
     const isMMS    = dealType === 'MMS';
 
+    // For MMS accounts, sum Org_Ops_Consumption_from_License__c across ALL orgs
+    // (parent + child) since consumption is distributed across the shared license
+    const mmsTotalOpsConsumed = isMMS && lcFromInput
+        ? lcFromInput.reduce((sum, lc) => sum + (lc.Org_Ops_Consumption_from_License__c || 0), 0)
+        : null;
+
     // --- ZONE & DASHBOARD URL (account-level) ---
     const zoneNameRaw = get(primaryOrg, 'imt_Org_Zone_Name__c', 'us1');
     const lowerZone = zoneNameRaw.toLowerCase();
@@ -453,7 +459,7 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
         // For MMS accounts, ops are consumed against the license rather than
         // the monthly counter — use Org_Ops_Consumption_from_License__c instead
         opsConsumedCurrMonth: isMMS
-            ? get(primaryOrg, 'Org_Ops_Consumption_from_License__c', 0)
+            ? (mmsTotalOpsConsumed || 0)
             : get(primaryOrg, 'imt_Org_Ops_Consumed_Curr_Month__c', 0),
         opsConsumedPrevMonth: get(primaryOrg, 'imt_Org_Ops_Consumed_Prev_Month__c', 0),
         opsConsumedLast30d: get(primaryOrg, 'imt_Org_Ops_Consumed_Last_30d__c', 0),
@@ -622,7 +628,7 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
             nbUsersPrevMonth:           get(primaryOrg, 'imt_Org_Nb_Users_Prev_Month__c', 0),
             nbUsersActive:              get(primaryOrg, 'imt_Org_Nb_Active_Users_Curr_Month__c', 0),
             trendNbUsers:               calcTrend(get(primaryOrg, 'imt_Org_Nb_Users_Curr_Month__c'), get(primaryOrg, 'imt_Org_Nb_Users_Prev_Month__c')),
-            opsConsumedCurrMonth:       isMMS ? get(primaryOrg, 'Org_Ops_Consumption_from_License__c', 0) : get(primaryOrg, 'imt_Org_Ops_Consumed_Curr_Month__c', 0),
+            opsConsumedCurrMonth:       isMMS ? (mmsTotalOpsConsumed || 0) : get(primaryOrg, 'imt_Org_Ops_Consumed_Curr_Month__c', 0),
             opsConsumedPrevMonth:       get(primaryOrg, 'imt_Org_Ops_Consumed_Prev_Month__c', 0),
             trendOpsConsumed:           calcTrend(get(primaryOrg, 'imt_Org_Ops_Consumed_Curr_Month__c'), get(primaryOrg, 'imt_Org_Ops_Consumed_Prev_Month__c')),
             listOfAppsUsed:             get(primaryOrg, 'List_of_Apps_Used__c', "None (Pre-Adoption)"),
