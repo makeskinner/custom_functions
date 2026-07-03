@@ -172,6 +172,13 @@ function transformOpportunities(accountsArray) {
     const isLead = !orgIdRaw;
     const sigmaId = orgIdRaw ? `m_${orgIdRaw}` : "N/A";
 
+    // --- ACCOUNT-LEVEL ROLLUP CONSUMPTION (authoritative for all account types) ---
+    // These aggregate across ALL orgs (enterprise, partner multi-org, etc.)
+    // Use as primary source; fall back to lifecycle subquery only when rollups are null.
+    const acctTotalOpsConsumed  = get(account, 'imt_Total_credits_consumed__c', null);
+    const acctTotalOpsInPlan    = get(account, 'imt_Total_number_of_credits_w_extras__c', null);
+    const acctTotalUsers        = get(account, 'imt_Total_number_of_users__c', null);
+
     // --- ZONE & DASHBOARD URL (account-level) ---
     const zoneNameRaw = get(primaryOrg, 'imt_Org_Zone_Name__c', 'us1');
     const lowerZone = zoneNameRaw.toLowerCase();
@@ -311,7 +318,10 @@ function transformOpportunities(accountsArray) {
     );
 
     const nbUsersActive = get(primaryOrg, 'imt_Org_Nb_Active_Users_Curr_Month__c', 0);
-    const nbUsersTotal  = get(primaryOrg, 'imt_Org_Nb_Users_Curr_Month__c', 0);
+    // Prefer account-level total (aggregates all orgs) over single lifecycle record
+    const nbUsersTotal  = acctTotalUsers != null
+        ? acctTotalUsers
+        : get(primaryOrg, 'imt_Org_Nb_Users_Curr_Month__c', 0);
     const currentARR    = get(account, 'Integromat_ARR_USD__c', 0);
     const expansionLevel = calculateExpansionLevel(currentARR, nbUsersActive);
 
@@ -399,7 +409,9 @@ function transformOpportunities(accountsArray) {
         orgIdRaw: orgIdRaw || "LEAD_NO_ORG",
         orgZone: zoneNameRaw,
         orgPlan: get(primaryOrg, 'imt_Org_Plan__c', "Prospect"),
-        opsInPlan: get(primaryOrg, 'imt_Org_Ops_In_Plan__c', 0),
+        opsInPlan: acctTotalOpsInPlan != null
+            ? acctTotalOpsInPlan
+            : get(primaryOrg, 'imt_Org_Ops_In_Plan__c', 0),
         extraOpsInPlan: get(primaryOrg, 'imt_Org_Extra_Ops_In_Plan__c', 0),
         opsLeftInPlan: get(primaryOrg, 'imt_Org_Ops_Left_In_Plan__c', 0),
         opsLeftInPlanWithExtra: get(primaryOrg, 'imt_Org_Ops_Left_In_Plan_w_Extra__c', 0),
@@ -413,9 +425,12 @@ function transformOpportunities(accountsArray) {
         trendNbTeams: calcTrend(get(primaryOrg, 'imt_Org_Nb_Teams_Current_Month__c'), get(primaryOrg, 'imt_Org_Nb_Teams_Previous_Month__c')),
 
         // BLOCK 6: RAW USAGE
+        // opsConsumedCurrMonth uses account-level rollup (aggregates all orgs) when available
         activeScenariosCurrMonth: get(primaryOrg, 'imt_Org_Active_Scenarios_Curr_Month__c', 0),
         activeScenariosPrevMonth: get(primaryOrg, 'imt_Org_Active_Scenarios_Prev_Month__c', 0),
-        opsConsumedCurrMonth: get(primaryOrg, 'imt_Org_Ops_Consumed_Curr_Month__c', 0),
+        opsConsumedCurrMonth: acctTotalOpsConsumed != null
+            ? acctTotalOpsConsumed
+            : get(primaryOrg, 'imt_Org_Ops_Consumed_Curr_Month__c', 0),
         opsConsumedPrevMonth: get(primaryOrg, 'imt_Org_Ops_Consumed_Prev_Month__c', 0),
         opsConsumedLast30d: get(primaryOrg, 'imt_Org_Ops_Consumed_Last_30d__c', 0),
         nbUsersCurrMonth: nbUsersTotal,
@@ -566,7 +581,7 @@ function transformOpportunities(accountsArray) {
             makeDashboardLinkText:      `${zoneNameRaw} (${orgIdRaw || "Lead"})`,
             topUserName:                sfUsers.length > 0 ? (getString(sfUsers[0], 'USER_NAME') || 'Unknown') : 'Unknown',
             topUserEmail:               sfUsers.length > 0 ? (getString(sfUsers[0], 'EMAIL') || 'no-email-found@make.com') : 'no-email-found@make.com',
-            opsInPlan:                  get(primaryOrg, 'imt_Org_Ops_In_Plan__c', 0),
+            opsInPlan:                  acctTotalOpsInPlan != null ? acctTotalOpsInPlan : get(primaryOrg, 'imt_Org_Ops_In_Plan__c', 0),
             opsLeftInPlan:              get(primaryOrg, 'imt_Org_Ops_Left_In_Plan__c', 0),
             opsLeftInPlanWithExtra:     get(primaryOrg, 'imt_Org_Ops_Left_In_Plan_w_Extra__c', 0),
             extraOpsInPlan:             get(primaryOrg, 'imt_Org_Extra_Ops_In_Plan__c', 0),
@@ -581,7 +596,7 @@ function transformOpportunities(accountsArray) {
             nbUsersPrevMonth:           get(primaryOrg, 'imt_Org_Nb_Users_Prev_Month__c', 0),
             nbUsersActive:              get(primaryOrg, 'imt_Org_Nb_Active_Users_Curr_Month__c', 0),
             trendNbUsers:               calcTrend(get(primaryOrg, 'imt_Org_Nb_Users_Curr_Month__c'), get(primaryOrg, 'imt_Org_Nb_Users_Prev_Month__c')),
-            opsConsumedCurrMonth:       get(primaryOrg, 'imt_Org_Ops_Consumed_Curr_Month__c', 0),
+            opsConsumedCurrMonth:       acctTotalOpsConsumed != null ? acctTotalOpsConsumed : get(primaryOrg, 'imt_Org_Ops_Consumed_Curr_Month__c', 0),
             opsConsumedPrevMonth:       get(primaryOrg, 'imt_Org_Ops_Consumed_Prev_Month__c', 0),
             trendOpsConsumed:           calcTrend(get(primaryOrg, 'imt_Org_Ops_Consumed_Curr_Month__c'), get(primaryOrg, 'imt_Org_Ops_Consumed_Prev_Month__c')),
             listOfAppsUsed:             get(primaryOrg, 'List_of_Apps_Used__c', "None (Pre-Adoption)"),
