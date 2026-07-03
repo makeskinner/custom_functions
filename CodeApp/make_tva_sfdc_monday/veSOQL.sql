@@ -78,6 +78,7 @@ SELECT
          Contract_Duration__c,
          Expansion_Potential__c,
          Sum_Renewal_Amount__c,
+         Deal_Type__c,
          CSAT_Average__c,
          CSAT_Count__c,
          HealthScore_Average__c,
