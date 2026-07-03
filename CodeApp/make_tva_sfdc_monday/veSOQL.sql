@@ -75,6 +75,7 @@ SELECT
          Expansion_Potential__c,
          Sum_Renewal_Amount__c,
          Deal_Type__c,
+         Org_Ops_Consumption_from_License__c,
          CSAT_Average__c,
          CSAT_Count__c,
          HealthScore_Average__c,
