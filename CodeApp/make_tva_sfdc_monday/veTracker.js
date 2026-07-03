@@ -442,7 +442,15 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
         extraOpsInPlan: get(primaryOrg, 'imt_Org_Extra_Ops_In_Plan__c', 0),
         opsLeftInPlan: get(primaryOrg, 'imt_Org_Ops_Left_In_Plan__c', 0),
         opsLeftInPlanWithExtra: get(primaryOrg, 'imt_Org_Ops_Left_In_Plan_w_Extra__c', 0),
-        expConsumption: get(primaryOrg, 'imt_Exp_Consumption_End_Val_Period__c', 0),
+        // For MMS accounts, calculate consumption % from aggregated ops consumed vs parent plan capacity
+        // For standard accounts use the SFDC-provided imt_Exp_Consumption_End_Val_Period__c
+        expConsumption: (() => {
+            if (isMMS && mmsTotalOpsConsumed != null) {
+                const plan = get(primaryOrg, 'imt_Org_Ops_In_Plan__c', 0);
+                return plan > 0 ? Math.round((mmsTotalOpsConsumed / plan) * 100) : 0;
+            }
+            return get(primaryOrg, 'imt_Exp_Consumption_End_Val_Period__c', 0);
+        })(),
         listOfAppsUsed: get(primaryOrg, 'List_of_Apps_Used__c', "None (Pre-Adoption)"),
 
         // BLOCK 5: USAGE TRENDS
