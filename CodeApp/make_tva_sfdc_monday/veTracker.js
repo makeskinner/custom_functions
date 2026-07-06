@@ -460,7 +460,18 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
         expConsumption: mmsExpConsumptionPct !== null
             ? mmsExpConsumptionPct
             : get(primaryOrg, 'imt_Exp_Consumption_End_Val_Period__c', 0),
-        listOfAppsUsed: get(primaryOrg, 'List_of_Apps_Used__c', null) || appsMap[sigmaId] || null,
+        (() => {
+            const sfdc      = get(primaryOrg, 'List_of_Apps_Used__c', null);
+            const snowflake = appsMap[sigmaId] || null;
+            return snowflake || sfdc || null;
+        })(),
+        appsSourceMismatch: (() => {
+            const sfdc      = get(primaryOrg, 'List_of_Apps_Used__c', null);
+            const snowflake = appsMap[sigmaId] || null;
+            // Flag if SFDC has a value but it differs from Snowflake (or SFDC has value but Snowflake doesn't)
+            if (!sfdc || !snowflake) return false;
+            return sfdc.trim().toLowerCase() !== snowflake.trim().toLowerCase();
+        })(),
 
         // BLOCK 5: USAGE TRENDS
         trendActiveScenarios: calcTrend(get(primaryOrg, 'imt_Org_Active_Scenarios_Curr_Month__c'), get(primaryOrg, 'imt_Org_Active_Scenarios_Prev_Month__c')),
@@ -646,7 +657,11 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
             opsConsumedCurrMonth:       isMMS ? (mmsTotalOpsConsumed || 0) : get(primaryOrg, 'imt_Org_Ops_Consumed_Curr_Month__c', 0),
             opsConsumedPrevMonth:       get(primaryOrg, 'imt_Org_Ops_Consumed_Prev_Month__c', 0),
             trendOpsConsumed:           calcTrend(get(primaryOrg, 'imt_Org_Ops_Consumed_Curr_Month__c'), get(primaryOrg, 'imt_Org_Ops_Consumed_Prev_Month__c')),
-            listOfAppsUsed:             get(primaryOrg, 'List_of_Apps_Used__c', null) || appsMap[sigmaId] || null,
+            listOfAppsUsed:             (() => {
+                const sfdc = get(primaryOrg, 'List_of_Apps_Used__c', null);
+                const snowflake = appsMap[sigmaId] || null;
+                return snowflake || sfdc || null;
+            })(),
             csatAverage:                get(primaryOrg, 'CSAT_Average__c'),
             csatCount:                  get(primaryOrg, 'CSAT_Count__c', 0),
             healthScoreAverage:         get(primaryOrg, 'HealthScore_Average__c'),
