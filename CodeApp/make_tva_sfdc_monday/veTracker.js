@@ -460,7 +460,7 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
         expConsumption: mmsExpConsumptionPct !== null
             ? mmsExpConsumptionPct
             : get(primaryOrg, 'imt_Exp_Consumption_End_Val_Period__c', 0),
-        (() => {
+        listOfAppsUsed: (() => {
             const sfdc      = get(primaryOrg, 'List_of_Apps_Used__c', null);
             const snowflake = appsMap[sigmaId] || null;
             return snowflake || sfdc || null;
