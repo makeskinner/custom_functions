@@ -12,6 +12,12 @@ function extractSnowflakeData(inputArray) {
 const allSnowflakeTeams = extractSnowflakeData(input.snowflakeTeams);
 const allSnowflakeUsers = extractSnowflakeData(input.snowflakeUsers);
 
+// appsMap: { 'm_12345': 'Slack, Google Sheets, ...' } — from Snowflake apps query via buildAppsMap.js
+// Falls back to empty object if not provided (backwards compatible)
+const appsMap = (input.appsMap && typeof input.appsMap === 'object' && !Array.isArray(input.appsMap))
+    ? input.appsMap
+    : {};
+
 const snowflakeTeamsByOrg = {};
 allSnowflakeTeams.forEach(t => {
     const id = String(t.ORG_ID || t.org_id || '').replace(/^m_/, '');
@@ -454,7 +460,7 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
         expConsumption: mmsExpConsumptionPct !== null
             ? mmsExpConsumptionPct
             : get(primaryOrg, 'imt_Exp_Consumption_End_Val_Period__c', 0),
-        listOfAppsUsed: get(primaryOrg, 'List_of_Apps_Used__c', null) || null,
+        listOfAppsUsed: get(primaryOrg, 'List_of_Apps_Used__c', null) || appsMap[sigmaId] || null,
 
         // BLOCK 5: USAGE TRENDS
         trendActiveScenarios: calcTrend(get(primaryOrg, 'imt_Org_Active_Scenarios_Curr_Month__c'), get(primaryOrg, 'imt_Org_Active_Scenarios_Prev_Month__c')),
@@ -640,7 +646,7 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
             opsConsumedCurrMonth:       isMMS ? (mmsTotalOpsConsumed || 0) : get(primaryOrg, 'imt_Org_Ops_Consumed_Curr_Month__c', 0),
             opsConsumedPrevMonth:       get(primaryOrg, 'imt_Org_Ops_Consumed_Prev_Month__c', 0),
             trendOpsConsumed:           calcTrend(get(primaryOrg, 'imt_Org_Ops_Consumed_Curr_Month__c'), get(primaryOrg, 'imt_Org_Ops_Consumed_Prev_Month__c')),
-            listOfAppsUsed:             get(primaryOrg, 'List_of_Apps_Used__c', null) || null,
+            listOfAppsUsed:             get(primaryOrg, 'List_of_Apps_Used__c', null) || appsMap[sigmaId] || null,
             csatAverage:                get(primaryOrg, 'CSAT_Average__c'),
             csatCount:                  get(primaryOrg, 'CSAT_Count__c', 0),
             healthScoreAverage:         get(primaryOrg, 'HealthScore_Average__c'),
