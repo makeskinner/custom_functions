@@ -62,6 +62,7 @@ SELECT
          Activity_Date__c,
          Delivered__c,
          Delivered_Date__c,
+         Rescheduled__c,
          DurationInMinutes,
          Location,
          Approval_Status__c,
