@@ -325,7 +325,8 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
             contactEmail:       get(event, 'Who.Email'),
             approvalStatus:     get(event, 'Approval_Status__c'),
             rejectionCount:     get(event, 'Rejection_Count__c'),
-            rejectedComments:   get(event, 'Rejected_Comments__c')
+            rejectedComments:   get(event, 'Rejected_Comments__c'),
+            rescheduled:        get(event, 'Rescheduled__c') === true || get(event, 'Rescheduled__c') === 'true'
         };
     });
 
