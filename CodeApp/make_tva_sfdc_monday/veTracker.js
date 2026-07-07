@@ -535,7 +535,7 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
         contractDuration: get(primaryOrg, 'Contract_Duration__c', 0),
         expansionPotential: get(primaryOrg, 'Expansion_Potential__c', 0),
         projectTimelineFrom: get(opp, 'CreatedDate', '').split('T')[0], 
-        projectTimelineTo: get(opp, 'CloseDate', '').split('T')[0],
+        projectTimelineTo: (get(opp, 'CloseDate', null) || '').split('T')[0] || null,
         
         // BLOCK 10: PRE-SALES & STRATEGY
         executiveSummary: get(opp, 'Executive_Summary__c') || "",
@@ -624,7 +624,7 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
             sumRenewalAmount:           get(primaryOrg, 'Sum_Renewal_Amount__c', 0),
             contractDuration:           get(primaryOrg, 'Contract_Duration__c', 0),
             projectTimelineFrom:        get(opp, 'CreatedDate', '').split('T')[0],
-            projectTimelineTo:          get(opp, 'CloseDate', '').split('T')[0],
+            projectTimelineTo:          (get(opp, 'CloseDate', null) || '').split('T')[0] || null,
             nextRenewalDate:            get(account, 'Next_Renewal_Date__c'),
             churnRiskStatus:            get(opp, 'imt_Churn_Risk__c') ? String(get(opp, 'imt_Churn_Risk__c')).toUpperCase() : null,
             churnValue:                 get(opp, 'imt_Make_Estimated_Churn_Value__c', 0),
