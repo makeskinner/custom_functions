@@ -43,7 +43,11 @@ SELECT
              (IsClosed = false AND StageName NOT IN ('Rejected', 'Profile'))
              OR
              (StageName = 'Closed Won' AND RecordType.DeveloperName = 'O04'
-              AND CloseDate >= 2026-02-01)
+              AND CloseDate >= {{103.fyrenewalwindowstart}})
+             OR
+             (StageName = 'Closed Lost'
+              AND CloseDate >= {{103.fyrenewalwindowstart}}
+              AND CloseDate <= {{103.fyrenewalwindowend}})
          )
      ORDER BY
          AmountConvertedUSD__c DESC 
