@@ -12,7 +12,16 @@ function extractSnowflakeData(inputArray) {
 const allSnowflakeTeams = extractSnowflakeData(input.snowflakeTeams);
 const allSnowflakeUsers = extractSnowflakeData(input.snowflakeUsers);
 
-// appsMap: { 'm_12345': 'Slack, Google Sheets, ...' } — from Snowflake apps query via buildAppsMap.js
+// appsMap: { 'm_12345': 'Slack, Google Sheets, ...' } — from Snowflake apps query
+
+// Academy data — one row per user per org, with ARRAY_AGG courses/badges
+const allAcademyUsers = extractSnowflakeData(input.snowflakeAcademy || []);
+const academyByOrg = {};
+allAcademyUsers.forEach(u => {
+    const id = String(u.ORG_ID || u.org_id || '').replace(/^m_/, '');
+    if (!academyByOrg[id]) academyByOrg[id] = [];
+    academyByOrg[id].push(u);
+}); via buildAppsMap.js
 // Falls back to empty object if not provided (backwards compatible)
 const appsMap = (input.appsMap && typeof input.appsMap === 'object' && !Array.isArray(input.appsMap))
     ? input.appsMap
@@ -31,6 +40,35 @@ allSnowflakeUsers.forEach(u => {
     if (!snowflakeUsersByOrg[id]) snowflakeUsersByOrg[id] = [];
     snowflakeUsersByOrg[id].push(u);
 });
+
+
+// ── Academy helpers ───────────────────────────────────────────────────────────
+function parseAgg(val) {
+    // ARRAY_AGG in Snowflake returns a JSON string like '["Course A","Course B"]'
+    // or a native JS array depending on the connector
+    if (!val) return [];
+    if (Array.isArray(val)) return val.filter(Boolean);
+    try { const p = JSON.parse(val); return Array.isArray(p) ? p.filter(Boolean) : []; }
+    catch { return String(val).split(',').map(s => s.trim()).filter(Boolean); }
+}
+
+function academySummary(users) {
+    if (!users || users.length === 0) return null;
+    const courses  = [...new Set(users.flatMap(u => parseAgg(u.COURSES_COMPLETED || u.courses_completed)))].filter(Boolean);
+    const badges   = [...new Set(users.flatMap(u => parseAgg(u.BADGES_EARNED    || u.badges_earned)))].filter(Boolean);
+    const totalCompleted = users.reduce((s, u) => s + (Number(u.COURSES_COMPLETED_COUNT || u.courses_completed_count) || 0), 0);
+    const lastAt   = users.map(u => u.LAST_COURSE_COMPLETED_AT || u.last_course_completed_at).filter(Boolean).sort().pop() || null;
+    const npsVals  = users.map(u => Number(u.NPS_CURRENT_VALUE || u.nps_current_value)).filter(v => !isNaN(v) && v !== 0);
+    const avgNps   = npsVals.length ? Math.round(npsVals.reduce((a,b) => a+b, 0) / npsVals.length) : null;
+    const usersWithBadge = users.filter(u => parseAgg(u.BADGES_EARNED || u.badges_earned).length > 0).length;
+    const featureFlags = {
+        hasUsedRouter:       users.some(u => u.HAS_USED_ROUTER       === true || u.has_used_router       === true),
+        hasUsedJson:         users.some(u => u.HAS_USED_JSON         === true || u.has_used_json         === true),
+        hasUsedErrorHandler: users.some(u => u.HAS_USED_ERROR_HANDLER === true || u.has_used_error_handler === true),
+        hasActiveWebhook:    users.some(u => u.HAS_ACTIVE_WEBHOOK    === true || u.has_active_webhook    === true),
+    };
+    return { courses, badges, totalCompleted, lastAt, avgNps, usersWithBadge, featureFlags };
+}
 
 /**
  * Calculates Management Priority based on Renewal (H1/H2), Consumption, and Score.
@@ -333,6 +371,7 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
     // --- PHASE 3: SNOWFLAKE SYNTHESIS (account-level, per-org lookup) ---
     const sfTeams = snowflakeTeamsByOrg[String(orgIdRaw)] || [];
     const sfUsers = snowflakeUsersByOrg[String(orgIdRaw)] || [];
+    const sfAcademy = academyByOrg[String(orgIdRaw)] || [];
     let totalL = 0, total2 = 0;
     const teamSummaryForAgent = isLead ? [] : sfTeams.map(t => {
         const cL = getVal(t, 'CREDITS_LAST_MONTH'), c2 = getVal(t, 'CREDITS_2_MONTHS_AGO');
@@ -576,6 +615,12 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
         topUserEmail: sfUsers.length > 0 ? (getString(sfUsers[0], 'EMAIL') || 'no-email-found@make.com') : 'no-email-found@make.com',
         topUserRole: sfUsers.length > 0 ? (getString(sfUsers[0], 'USER_JOB_ROLE') || 'Unknown') : 'Unknown',
         topUserCreditsLastMonth: sfUsers.length > 0 ? getVal(sfUsers[0], 'CREDITS_LAST_MONTH') : 0,
+
+        // BLOCK 15b: ACADEMY INSIGHTS
+        academySummary: (() => {
+            const summary = academySummary(sfAcademy);
+            return summary;
+        })(),
 
         // BLOCK 15: EXPANSION FRAMEWORK
         expansionLevel: expansionLevel,
