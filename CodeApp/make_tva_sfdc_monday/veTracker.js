@@ -21,7 +21,9 @@ allAcademyUsers.forEach(u => {
     const id = String(u.ORG_ID || u.org_id || '').replace(/^m_/, '');
     if (!academyByOrg[id]) academyByOrg[id] = [];
     academyByOrg[id].push(u);
-}); via buildAppsMap.js
+});
+
+// appsMap: { 'm_12345': 'Slack, Google Sheets, ...' } — from Snowflake apps query (buildAppsMap.js)
 // Falls back to empty object if not provided (backwards compatible)
 const appsMap = (input.appsMap && typeof input.appsMap === 'object' && !Array.isArray(input.appsMap))
     ? input.appsMap
