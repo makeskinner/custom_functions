@@ -46,28 +46,36 @@ allSnowflakeUsers.forEach(u => {
 
 // ── Academy helpers ───────────────────────────────────────────────────────────
 function parseAgg(val) {
-    // ARRAY_AGG in Snowflake returns a JSON string like '["Course A","Course B"]'
-    // or a native JS array depending on the connector
+    // ARRAY_AGG in Snowflake via Make connector can arrive as:
+    // - JS array (most common): ["Course A", "Course B"]
+    // - JSON string: '["Course A"]'
+    // - Make collection object: { 0: "Course A", 1: "Course B" } or array-like
+    // - Comma-separated string fallback
     if (!val) return [];
     if (Array.isArray(val)) return val.filter(Boolean);
+    // Make collection object (numeric keys)
+    if (typeof val === 'object') {
+        const vals = Object.values(val).filter(Boolean);
+        return vals.length ? vals : [];
+    }
     try { const p = JSON.parse(val); return Array.isArray(p) ? p.filter(Boolean) : []; }
     catch { return String(val).split(',').map(s => s.trim()).filter(Boolean); }
 }
 
 function academySummary(users) {
     if (!users || users.length === 0) return null;
-    const courses  = [...new Set(users.flatMap(u => parseAgg(u.COURSES_COMPLETED || u.courses_completed)))].filter(Boolean);
-    const badges   = [...new Set(users.flatMap(u => parseAgg(u.BADGES_EARNED    || u.badges_earned)))].filter(Boolean);
-    const totalCompleted = users.reduce((s, u) => s + (Number(u.COURSES_COMPLETED_COUNT || u.courses_completed_count) || 0), 0);
-    const lastAt   = users.map(u => u.LAST_COURSE_COMPLETED_AT || u.last_course_completed_at).filter(Boolean).sort().pop() || null;
+    const courses  = [...new Set(users.flatMap(u => parseAgg(u.COURSES_COMPLETED || u.courses_completed || u.coursesArray || u.COURSESARRAY)))].filter(Boolean);
+    const badges   = [...new Set(users.flatMap(u => parseAgg(u.BADGES_EARNED    || u.badges_earned    || u.badgesArray  || u.BADGESARRAY)))].filter(Boolean);
+    const totalCompleted = users.reduce((s, u) => s + (Number(u.COURSES_COMPLETED_COUNT || u.courses_completed_count || u.coursesCompletedCount || 0)), 0);
+    const lastAt   = users.map(u => u.LAST_COURSE_COMPLETED_AT || u.last_course_completed_at || u.lastCourseCompletedAt).filter(Boolean).sort().pop() || null;
     const npsVals  = users.map(u => Number(u.NPS_CURRENT_VALUE || u.nps_current_value)).filter(v => !isNaN(v) && v !== 0);
     const avgNps   = npsVals.length ? Math.round(npsVals.reduce((a,b) => a+b, 0) / npsVals.length) : null;
     const usersWithBadge = users.filter(u => parseAgg(u.BADGES_EARNED || u.badges_earned).length > 0).length;
     const featureFlags = {
-        hasUsedRouter:       users.some(u => u.HAS_USED_ROUTER       === true || u.has_used_router       === true),
-        hasUsedJson:         users.some(u => u.HAS_USED_JSON         === true || u.has_used_json         === true),
-        hasUsedErrorHandler: users.some(u => u.HAS_USED_ERROR_HANDLER === true || u.has_used_error_handler === true),
-        hasActiveWebhook:    users.some(u => u.HAS_ACTIVE_WEBHOOK    === true || u.has_active_webhook    === true),
+        hasUsedRouter:       users.some(u => u.HAS_USED_ROUTER       === true || u.has_used_router       === true || u.hasUsedRouter       === true),
+        hasUsedJson:         users.some(u => u.HAS_USED_JSON         === true || u.has_used_json         === true || u.hasUsedJson         === true),
+        hasUsedErrorHandler: users.some(u => u.HAS_USED_ERROR_HANDLER === true || u.has_used_error_handler === true || u.hasUsedErrorHandler === true),
+        hasActiveWebhook:    users.some(u => u.HAS_ACTIVE_WEBHOOK    === true || u.has_active_webhook    === true || u.hasActiveWebhook    === true),
     };
     return { courses, badges, totalCompleted, lastAt, avgNps, usersWithBadge, featureFlags };
 }
