@@ -631,6 +631,26 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
             const summary = academySummary(sfAcademy);
             return summary;
         })(),
+        // Raw per-user academy data for detailed user insights in Pulse
+        academyUsers: sfAcademy.map(u => ({
+            userId:       u.USER_ID      || u.user_id      || null,
+            name:         u.NAME         || u.name         || null,
+            email:        u.EMAIL        || u.email        || null,
+            nps:          u.NPS_CURRENT_VALUE || u.nps_current_value || null,
+            npsDate:      u.NPS_CURRENT_SUBMISSION_AT || u.nps_current_submission_at || null,
+            experience:   u.USER_AUTOMATION_EXPERIENCE || u.user_automation_experience || null,
+            goal:         u.USER_GOAL    || u.user_goal    || null,
+            jobRole:      u.USER_JOB_ROLE || u.user_job_role || null,
+            persona:      u.USER_PERSONA || u.user_persona || null,
+            hasRouter:    u.HAS_USED_ROUTER       === true || u.has_used_router       === true,
+            hasJson:      u.HAS_USED_JSON         === true || u.has_used_json         === true,
+            hasErrorHandler: u.HAS_USED_ERROR_HANDLER === true || u.has_used_error_handler === true,
+            hasWebhook:   u.HAS_ACTIVE_WEBHOOK    === true || u.has_active_webhook    === true,
+            courses:      parseAgg(u.COURSES_COMPLETED || u.courses_completed || u.coursesArray),
+            badges:       parseAgg(u.BADGES_EARNED    || u.badges_earned    || u.badgesArray),
+            coursesCount: Number(u.COURSES_COMPLETED_COUNT || u.courses_completed_count || u.coursesCompletedCount) || 0,
+            lastCourseAt: u.LAST_COURSE_COMPLETED_AT || u.last_course_completed_at || u.lastCourseCompletedAt || null,
+        })),
 
         // BLOCK 15: EXPANSION FRAMEWORK
         expansionLevel: expansionLevel,
