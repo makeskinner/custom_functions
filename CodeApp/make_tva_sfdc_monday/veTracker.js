@@ -631,11 +631,20 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
             const summary = academySummary(sfAcademy);
             return summary;
         })(),
-        // Raw per-user academy data for detailed user insights in Pulse
-        academyUsers: sfAcademy.map(u => ({
-            userId:       u.userId       || u.USER_ID      || u.user_id      || null,
-            name:         u.name         || u.NAME         || null,
-            email:        u.email        || u.EMAIL        || null,
+        // Raw per-user academy data — enriched from sfUsers (query 2) for name/email
+        academyUsers: (() => {
+            const userById = {};
+            sfUsers.forEach(su => {
+                const uid = su.USER_ID || su.userId || su.user_id;
+                if (uid) userById[uid] = su;
+            });
+            return sfAcademy.map(u => {
+                const uid = u.userId || u.USER_ID || u.user_id;
+                const su  = uid ? (userById[uid] || {}) : {};
+                return ({
+            userId:       uid || null,
+            name:         su.USER_NAME || su.userName || u.name || u.NAME || null,
+            email:        su.EMAIL || su.email || u.email || u.EMAIL || null,
             nps:          u.npsCurrentValue  || u.NPS_CURRENT_VALUE  || u.nps_current_value  || null,
             npsDate:      u.npsCurrentSubmissionAt || u.NPS_CURRENT_SUBMISSION_AT || u.nps_current_submission_at || null,
             experience:   u.userAutomationExperience || u.USER_AUTOMATION_EXPERIENCE || u.user_automation_experience || null,
@@ -650,7 +659,9 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
             badges:       parseAgg(u.badgesEarned     || u.BADGES_EARNED     || u.badges_earned    || u.badgesArray),
             coursesCount: Number(u.coursesCompletedCount || u.COURSES_COMPLETED_COUNT || u.courses_completed_count) || 0,
             lastCourseAt: u.lastCourseCompletedAt || u.LAST_COURSE_COMPLETED_AT || u.last_course_completed_at || null,
-        })),
+                });
+            });
+        })(),
 
         // BLOCK 15: EXPANSION FRAMEWORK
         expansionLevel: expansionLevel,
