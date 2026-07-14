@@ -71,11 +71,12 @@ function academySummary(users) {
     const npsVals  = users.map(u => Number(u.NPS_CURRENT_VALUE || u.nps_current_value)).filter(v => !isNaN(v) && v !== 0);
     const avgNps   = npsVals.length ? Math.round(npsVals.reduce((a,b) => a+b, 0) / npsVals.length) : null;
     const usersWithBadge = users.filter(u => parseAgg(u.BADGES_EARNED || u.badges_earned).length > 0).length;
+    const isTrue = v => v === true || String(v).toLowerCase() === 'true' || v === 1 || String(v) === '1';
     const featureFlags = {
-        hasUsedRouter:       users.some(u => u.HAS_USED_ROUTER       === true || u.has_used_router       === true || u.hasUsedRouter       === true),
-        hasUsedJson:         users.some(u => u.HAS_USED_JSON         === true || u.has_used_json         === true || u.hasUsedJson         === true),
-        hasUsedErrorHandler: users.some(u => u.HAS_USED_ERROR_HANDLER === true || u.has_used_error_handler === true || u.hasUsedErrorHandler === true),
-        hasActiveWebhook:    users.some(u => u.HAS_ACTIVE_WEBHOOK    === true || u.has_active_webhook    === true || u.hasActiveWebhook    === true),
+        hasUsedRouter:       users.some(u => isTrue(u.HAS_USED_ROUTER) || isTrue(u.has_used_router) || isTrue(u.hasUsedRouter)),
+        hasUsedJson:         users.some(u => isTrue(u.HAS_USED_JSON) || isTrue(u.has_used_json) || isTrue(u.hasUsedJson)),
+        hasUsedErrorHandler: users.some(u => isTrue(u.HAS_USED_ERROR_HANDLER) || isTrue(u.has_used_error_handler) || isTrue(u.hasUsedErrorHandler)),
+        hasActiveWebhook:    users.some(u => isTrue(u.HAS_ACTIVE_WEBHOOK) || isTrue(u.has_active_webhook) || isTrue(u.hasActiveWebhook)),
     };
     return { courses, badges, totalCompleted, lastAt, avgNps, usersWithBadge, featureFlags };
 }
@@ -485,7 +486,9 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
         // BLOCK 2: TEAM & OWNERSHIP
         integromatOwner: get(account, 'Integromat_Owner__r.Name'), 
         leadVE: get(account, 'imt_Make_Lead_VE__r.Name'), 
+        leadVEEmail: get(account, 'imt_Make_Lead_VE__r.Email'),
         leadVEManager: get(account, 'imt_Make_Lead_VE__r.Manager.Name'), 
+        leadVEManagerEmail: get(account, 'imt_Make_Lead_VE__r.Manager.Email'),
         bdrOwner: get(account, 'imt_Make_BDR__r.Name'),
 
         // BLOCK 3: LINKS
@@ -651,10 +654,10 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
             goal:         u.userGoal     || u.USER_GOAL    || u.user_goal    || null,
             jobRole:      u.userJobRole  || u.USER_JOB_ROLE || u.user_job_role || null,
             persona:      u.userPersona  || u.USER_PERSONA || u.user_persona || null,
-            hasRouter:    u.hasUsedRouter       === true || u.HAS_USED_ROUTER       === true || u.has_used_router       === true,
-            hasJson:      u.hasUsedJson         === true || u.HAS_USED_JSON         === true || u.has_used_json         === true,
-            hasErrorHandler: u.hasUsedErrorHandler === true || u.HAS_USED_ERROR_HANDLER === true || u.has_used_error_handler === true,
-            hasWebhook:   u.hasActiveWebhook    === true || u.HAS_ACTIVE_WEBHOOK    === true || u.has_active_webhook    === true,
+            hasRouter:       isTrue(u.hasUsedRouter) || isTrue(u.HAS_USED_ROUTER) || isTrue(u.has_used_router),
+            hasJson:         isTrue(u.hasUsedJson) || isTrue(u.HAS_USED_JSON) || isTrue(u.has_used_json),
+            hasErrorHandler: isTrue(u.hasUsedErrorHandler) || isTrue(u.HAS_USED_ERROR_HANDLER) || isTrue(u.has_used_error_handler),
+            hasWebhook:      isTrue(u.hasActiveWebhook) || isTrue(u.HAS_ACTIVE_WEBHOOK) || isTrue(u.has_active_webhook),
             courses:      parseAgg(u.coursesCompleted || u.COURSES_COMPLETED || u.courses_completed || u.coursesArray),
             badges:       parseAgg(u.badgesEarned     || u.BADGES_EARNED     || u.badges_earned    || u.badgesArray),
             coursesCount: Number(u.coursesCompletedCount || u.COURSES_COMPLETED_COUNT || u.courses_completed_count) || 0,
@@ -691,7 +694,9 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
             makeMarket:                 makeMarket,
             integromatOwner:            get(account, 'Integromat_Owner__r.Name'),
             leadVE:                     get(account, 'imt_Make_Lead_VE__r.Name'),
+            leadVEEmail:                get(account, 'imt_Make_Lead_VE__r.Email'),
             leadVEManager:              get(account, 'imt_Make_Lead_VE__r.Manager.Name'),
+            leadVEManagerEmail:         get(account, 'imt_Make_Lead_VE__r.Manager.Email'),
             notOnOppTeamFlag:           false,
             oppType:                    preciseOppType,
             renewalType:                (() => {
