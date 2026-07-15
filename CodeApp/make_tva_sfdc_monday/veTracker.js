@@ -641,6 +641,7 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
                 const uid = su.USER_ID || su.userId || su.user_id;
                 if (uid) userById[uid] = su;
             });
+            const isTrue = v => v === true || String(v).toLowerCase() === 'true' || v === 1 || String(v) === '1';
             return sfAcademy.map(u => {
                 const uid = u.userId || u.USER_ID || u.user_id;
                 const su  = uid ? (userById[uid] || {}) : {};
