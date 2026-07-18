@@ -315,16 +315,9 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
     const makeMarket = deriveMakeMarket(billingCountryCode, billingCountryName);
 
     // --- PHASE 2: CONSOLIDATED EVENT ENGINE (account-level — processed once) ---
-    // Filter events to those owned by the Lead VE for this account
-    // (SOQL can't do cross-object field references in subquery WHERE, so we filter here)
-    const leadVEName = get(account, 'imt_Make_Lead_VE__r.Name', '');
+    // Fetch all events for the account so cross-account workshops sync correctly
     const allEventRecords = get(account, 'Events.records', []);
-    const eventRecords = leadVEName
-        ? allEventRecords.filter(e => {
-              const ownerName = get(e, 'Owner.Name') || get(e, 'OwnerId') || '';
-              return ownerName === leadVEName;
-          })
-        : allEventRecords;
+    const eventRecords = allEventRecords; // Pass all events through
     const now = new Date();
     const sixtyDaysAgo = new Date(); sixtyDaysAgo.setDate(now.getDate() - 60);
     const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(now.getDate() - 30);
@@ -375,7 +368,8 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
             approvalStatus:     get(event, 'Approval_Status__c'),
             rejectionCount:     get(event, 'Rejection_Count__c'),
             rejectedComments:   get(event, 'Rejected_Comments__c'),
-            rescheduled:        get(event, 'Rescheduled__c') === true || get(event, 'Rescheduled__c') === 'true'
+            rescheduled:        get(event, 'Rescheduled__c') === true || get(event, 'Rescheduled__c') === 'true',
+            assigned:           get(event, 'Owner.Name') || get(event, 'OwnerId') || null
         };
     });
 
