@@ -562,6 +562,7 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
 
         // BLOCK 9: SALES METADATA
         oppType: preciseOppType,
+        celonisBusinessUnit: get(opp, 'Celonis_Business_Unit__c'),
         dealType: dealType,
         isMMS:    isMMS,
         recordType: ['Auto-Renewal', 'Manual Renewal'].includes(preciseOppType) ? 'O02' : (preciseOppType === 'Land' ? 'O04' : 'O04'),
@@ -694,7 +695,6 @@ if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) 
             leadVEManagerEmail:         get(account, 'imt_Make_Lead_VE__r.Manager.Email'),
             notOnOppTeamFlag:           false,
             oppType:                    preciseOppType,
-            celonisBusinessUnit:        get(opp, 'Celonis_Business_Unit__c'),
             renewalType:                (() => {
                 const sfVal = get(opp, 'Renewal_Type__c');
                 if (sfVal) return sfVal;
