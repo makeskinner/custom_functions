@@ -176,6 +176,27 @@ function transformOpportunities(accountsArray) {
 
     const companyName = get(account, 'Name');
 
+    // --- ACCOUNT METADATA & CROSSBEAM EXTRACTIONS ---
+    const aiMandateLikelihood      = get(account, 'imt_AI_Mandate_Likelihood__c', 'Low');
+    const aiLikelihoodExplanation = get(account, 'imt_AI_Likelihood_Explanation__c', '');
+    const accountPriority          = get(account, 'Account_Priority__c', 'None');
+    const isReferenceable          = get(account, 'Referenceable_legal__c') === 'Yes';
+    const safebaseUrl              = get(account, 'safebase__Account_Share_Link__c');
+    const industry                 = get(account, 'Industry', '');
+    const revenueBand              = get(account, 'Revenue_Bands__c', '');
+    const annualRevenueUsd         = get(account, 'Annual_Revenue_USD__c', 0);
+
+    const crossbeamRecords = get(account, 'xbeamprod__Overlaps__r.records', []);
+    const formattedCrossbeam = crossbeamRecords.map(cb => ({
+        sfId:              get(cb, 'Id'),
+        partnerName:       get(cb, 'xbeamprod__Partner_Name__c'),
+        partnerPopulation: get(cb, 'xbeamprod__Partner_Standard_Populations__c'),
+        myPopulation:      get(cb, 'xbeamprod__Standard_Populations__c')
+    }));
+    const crossbeamSummary = formattedCrossbeam.length > 0
+        ? formattedCrossbeam.map(cb => `${cb.partnerName}${cb.partnerPopulation ? ` (${cb.partnerPopulation})` : ''}`).join(', ')
+        : 'No active ecosystem overlaps';
+
     const lifecyclesByAccount = {};
     if (Array.isArray(input.lifecycleRecords) && input.lifecycleRecords.length > 0) {
         input.lifecycleRecords.forEach(lc => {
@@ -405,7 +426,19 @@ function transformOpportunities(accountsArray) {
         const urgency = calculateUrgency(preciseOppType, priorityVal, get(opp, 'imt_Churn_Risk__c'));
 
         const agentPayload = {
-            acc:  { id: get(account, 'Id'), n: companyName, arr: currentARR, pr: priorityVal, level: expansionLevel },
+            acc:  { 
+                id: get(account, 'Id'), 
+                n: companyName, 
+                arr: currentARR, 
+                pr: priorityVal, 
+                level: expansionLevel,
+                aiLikelihood: aiMandateLikelihood,
+                aiExplanation: aiLikelihoodExplanation,
+                priorityTier: accountPriority,
+                isReferenceable: isReferenceable,
+                industry: industry,
+                revenueBand: revenueBand
+            },
             comm: {
                 st:      get(opp, 'StageName') || "Unknown Stage",
                 type:    preciseOppType,
@@ -416,7 +449,11 @@ function transformOpportunities(accountsArray) {
                 notes:   get(opp, 'imt_Notes__c') ? get(opp, 'imt_Notes__c').substring(0, 400) : "[MISSING_TECHNICAL_NOTES]",
                 next:    get(opp, 'Next_Step__c') ? get(opp, 'Next_Step__c').substring(0, 300) : "[MISSING_NEXT_STEPS]"
             },
-            tech: { apps: (get(primaryOrg, 'List_of_Apps_Used__c') || "None Listed"), isLead: isLead },
+            tech: { 
+                apps: (get(primaryOrg, 'List_of_Apps_Used__c') || "None Listed"), 
+                isLead: isLead,
+                crossbeam: crossbeamSummary 
+            },
             ve:   { p: pastMeetingsL60D, d: workshopsDelivered, events: isTopOpp ? formattedEvents : [] },
             snk:  { trend: overallTrend, credits: totalL, consumption: get(primaryOrg, 'imt_Exp_Consumption_End_Val_Period__c', 0), teams: teamSummaryForAgent, users: powerUserSummaryForAgent, functions: activeFunctions },
             users: { active: nbUsersActive, total: nbUsersTotal, gap: (nbUsersTotal - nbUsersActive) }
@@ -537,6 +574,21 @@ function transformOpportunities(accountsArray) {
             billingCountry: get(account, 'BillingCountry'),
             billingCountryCode: get(account, 'BillingCountryCode'),
             makeMarket: makeMarket,
+
+            // Account & AI Metadata
+            aiMandateLikelihood,
+            aiLikelihoodExplanation,
+            accountPriority,
+            isReferenceable,
+            safebaseUrl,
+            industry,
+            revenueBand,
+            annualRevenueUsd,
+
+            // Ecosystem / Crossbeam Overlaps
+            crossbeamCount: formattedCrossbeam.length,
+            crossbeamSummary,
+            crossbeamOverlaps: formattedCrossbeam,
 
             calculatedPriority: priorityVal,
             pastMeetingsL30D: isTopOpp ? pastMeetingsL30D : 0,
