@@ -452,7 +452,8 @@ function transformOpportunities(accountsArray) {
             tech: { 
                 apps: (get(primaryOrg, 'List_of_Apps_Used__c') || "None Listed"), 
                 isLead: isLead,
-                crossbeam: crossbeamSummary 
+                crossbeam: crossbeamSummary,
+                safebaseUrl: safebaseUrl
             },
             ve:   { p: pastMeetingsL60D, d: workshopsDelivered, events: isTopOpp ? formattedEvents : [] },
             snk:  { trend: overallTrend, credits: totalL, consumption: get(primaryOrg, 'imt_Exp_Consumption_End_Val_Period__c', 0), teams: teamSummaryForAgent, users: powerUserSummaryForAgent, functions: activeFunctions },
