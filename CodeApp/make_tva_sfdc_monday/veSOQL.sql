@@ -3,16 +3,26 @@ SELECT
    Name,
    Integromat_Owner__r.Name,
    imt_Make_Lead_VE__r.Manager.Name,
+   imt_Make_Lead_VE__r.Manager.Email,
    imt_Make_BDR__r.Name,
    imt_Make_Lead_VE__r.Name,
+   imt_Make_Lead_VE__r.Email,
    Make_Expansion_Score_RollUp__c,
    Integromat_ARR_USD__c,
    Next_Renewal_Date__c,
    imt_Company_Size__c,
    BillingCountry,
    BillingCountryCode,
+   Industry,
+   Annual_Revenue_USD__c,
+   Revenue_Bands__c,
+   Account_Priority__c,
+   Referenceable_legal__c,
+   safebase__Account_Share_Link__c,
+   imt_AI_Mandate_Likelihood__c,
+   imt_AI_Likelihood_Explanation__c,
    (
-     SELECT
+      SELECT
          Id, 
          Name, 
          StageName, 
@@ -34,22 +44,24 @@ SELECT
          imt_Pre_Sales_confidence_for_Quarter__c,
          imt_Churn_Request_Details__c,
          Renewal_Type__c,
-         RecordType.DeveloperName
-     FROM
+         RecordType.DeveloperName,
+         Celonis_Business_Unit__c
+      FROM
          Opportunities 
-     WHERE
+      WHERE
          RecordType.DeveloperName IN ('O02', 'O04')
          AND (
-             (IsClosed = false AND StageName NOT IN ('Rejected', 'Profile'))
-             OR
-             (StageName = 'Closed Won' AND RecordType.DeveloperName = 'O04'
-              AND CloseDate >= {{103.fyrenewalwindowstart}})
-             OR
-             (StageName = 'Closed Lost'
-              AND CloseDate >= {{103.fyrenewalwindowstart}}
-              AND CloseDate <= {{103.fyrenewalwindowend}})
+            (IsClosed = false AND StageName NOT IN ('Rejected', 'Profile'))
+            OR
+            (StageName = 'Closed Won' AND RecordType.DeveloperName = 'O04'
+             AND CloseDate >= {{103.fyrenewalwindowstart}})
+            OR
+            (StageName = 'Closed Lost'
+             AND CloseDate >= {{103.fyrenewalwindowstart}}
+             AND CloseDate <= {{103.fyrenewalwindowend}})
          )
-     ORDER BY
+         AND Celonis_Business_Unit__c = 'Integromat/Make'
+      ORDER BY
          AmountConvertedUSD__c DESC 
    ),
    (
@@ -70,15 +82,24 @@ SELECT
          Rejected_Comments__c,
          Owner.Name,
          TYPEOF Who
-             WHEN Contact THEN Name, Email
-             WHEN Lead THEN Name, Email
+            WHEN Contact THEN Name, Email
+            WHEN Lead THEN Name, Email
          END
       FROM
          Events 
       WHERE
          Activity_Date__c >= {{formatDate(addMonths(now; -12); "YYYY-MM-DD")}}
          AND Activity_Date__c <= {{formatDate(addDays(now; 60); "YYYY-MM-DD")}}
+   ),
+   (
+      SELECT
+         Id,
+         xbeamprod__Partner_Name__c,
+         xbeamprod__Partner_Standard_Populations__c,
+         xbeamprod__Standard_Populations__c
+      FROM
+         xbeamprod__Overlaps__r
    )
 FROM
    Account 
-WHERE imt_Make_Lead_VE__c = '{{135.Id}}'
+WHERE imt_Make_Lead_VE__c = '{{197.Id}}'
