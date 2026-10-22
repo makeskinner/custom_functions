@@ -367,13 +367,14 @@ function transformOpportunities(accountsArray) {
     const expansionLevel = calculateExpansionLevel(currentARR, nbUsersActive);
 
     const oppTypeSortKey = (o) => {
-        const rt   = get(o, 'RecordType.Name', '');
-        const rtId = get(o, 'RecordTypeId', '');
-        const name = get(o, 'Name', '');
-        const sfType = get(o, 'Type', '');
-        if (/expand|expansion/i.test(sfType) || rt.includes('O04') || rtId === '01207000000bpeJAAQ') return 1;
-        if ((rt.includes('O02') || rtId === '0121v000000aUhnAAE') && !name.includes('Auto Renewal')) return 2;
-        if ((rt.includes('O02') || rtId === '0121v000000aUhnAAE') &&  name.includes('Auto Renewal')) return 3;
+        const devName = get(o, 'RecordType.DeveloperName', '');
+        const rtId    = get(o, 'RecordTypeId', '');
+        const name    = get(o, 'Name', '');
+        const sfType  = get(o, 'Type', '');
+
+        if ((devName === 'O02' || rtId === '0121v000000aUhnAAE') && !name.includes('Auto Renewal')) return 1;
+        if ((devName === 'O02' || rtId === '0121v000000aUhnAAE') &&  name.includes('Auto Renewal')) return 2;
+        if (/expand|expansion/i.test(sfType) || devName === 'O04' || rtId === '01207000000bpeJAAQ') return 3;
         return 4;
     };
     oppRecords.sort((a, b) => oppTypeSortKey(a) - oppTypeSortKey(b));
@@ -399,25 +400,20 @@ function transformOpportunities(accountsArray) {
         const leadVEManagerEmail = get(opp, 'imt_Make_Lead_VE__r.Manager.Email') 
                                 || get(account, 'imt_Make_Lead_VE__r.Manager.Email');
 
-        // 3. DYNAMIC CLASSIFICATION: Inspects "Type" field first
+        // 3. DYNAMIC CLASSIFICATION ENGINE
+        // Evaluates RecordType (DeveloperName) FIRST to isolate O02 Renewals from O04 Expansions
         const sfType = get(opp, 'Type', '');
         const oppNameRaw = get(opp, 'Name', '');
-        const recordTypeName = get(opp, 'RecordType.Name', '');
+        const devName = get(opp, 'RecordType.DeveloperName', '');
         const recordTypeId = get(opp, 'RecordTypeId', '');
         const renewalTypeRaw = get(opp, 'Renewal_Type__c', '');
 
         let preciseOppType = 'Expand';
 
-        if (/expand|expansion/i.test(sfType)) {
-            preciseOppType = 'Expand';
-        } else if (/land|new customer/i.test(sfType)) {
-            preciseOppType = 'Land';
-        } else if (recordTypeName.includes('O04') || recordTypeId === '01207000000bpeJAAQ') {
-            preciseOppType = 'Expand';
-        } else if (recordTypeName.includes('O02') || recordTypeId === '0121v000000aUhnAAE' || /renewal/i.test(sfType)) {
+        if (devName === 'O02' || recordTypeId === '0121v000000aUhnAAE' || /renewal/i.test(oppNameRaw)) {
             const isAuto = /auto.?renewal/i.test(renewalTypeRaw) || /auto.?renewal/i.test(oppNameRaw);
             preciseOppType = isAuto ? 'Auto-Renewal' : 'Manual Renewal';
-        } else if (isLead) {
+        } else if (/land|new customer/i.test(sfType) || /land/i.test(oppNameRaw) || isLead) {
             preciseOppType = 'Land';
         } else {
             preciseOppType = 'Expand';
