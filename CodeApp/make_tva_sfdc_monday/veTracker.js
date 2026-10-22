@@ -338,10 +338,10 @@ function transformOpportunities(accountsArray) {
         return {
             t:  getString(t, 'TEAM_NAME'),
             c:  cL,
-            tr: (c2 > 0) ? Math.round(((cL - c2) / c2) * 100) : 0,
+            tr: (c2 > 0) ? Math.round(((cL - c2) / c2) * 100) : (c2 === 0 && cL === 0 ? 0 : -100),
             bf: getString(t, 'BUSINESS_FUNCTION') || null
         };
-    }).filter(t => t.c > 0);
+    }); // <-- Filter removed so dormant teams pass through to the dashboard
 
     const activeFunctions = isLead ? '' : [...new Set(
         teamSummaryForAgent
