@@ -486,7 +486,10 @@ function transformOpportunities(accountsArray) {
             orgPlan: get(primaryOrg, 'imt_Org_Plan__c', "Prospect"),
             opsInPlan: get(primaryOrg, 'imt_Org_Ops_In_Plan__c', 0),
             extraOpsInPlan: get(primaryOrg, 'imt_Org_Extra_Ops_In_Plan__c', 0),
-            opsLeftInPlan: get(primaryOrg, 'imt_Org_Ops_Left_In_Plan__c', 0),
+            opsLeftInPlan: get(primaryOrg, 'imt_Org_Ops_Left_In_Plan__c') 
+                || get(primaryOrg, 'imt_Org_Ops_Left_in_Plan__c')
+                || get(primaryOrg, 'imt_Org_Ops_Left__c')
+                || Math.max(0, get(primaryOrg, 'imt_Org_Ops_Left_In_Plan_w_Extra__c', 0) - get(primaryOrg, 'imt_Org_Extra_Ops_In_Plan__c', 0)),
             opsLeftInPlanWithExtra: get(primaryOrg, 'imt_Org_Ops_Left_In_Plan_w_Extra__c', 0),
             expConsumption: mmsExpConsumptionPct !== null
                 ? mmsExpConsumptionPct
