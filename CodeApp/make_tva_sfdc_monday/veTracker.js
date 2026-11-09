@@ -358,11 +358,9 @@ function transformOpportunities(accountsArray) {
     // --- AI ADOPTION GAP CALCULATION ---
     // Recovered from an uncommitted draft that computed these correctly but
     // wired them into the (now-removed) mondayDataJson sub-object instead of
-    // the real top-level push -- same mistake as the earlier celonisBusinessUnit
-    // bug. Fixed here: the draft used appsMap[orgIdRaw], but the live appsMap
-    // is keyed by sigmaId (the m_-prefixed form) at both its other call sites
-    // (listOfAppsUsed, appsSourceMismatch below) -- orgIdRaw would have always
-    // missed.
+    // the real top-level push. Fixed here: the draft used appsMap[orgIdRaw],
+    // but the live appsMap is keyed by sigmaId (the m_-prefixed form) at both
+    // its other call sites (listOfAppsUsed, appsSourceMismatch below).
     const appsString = (get(primaryOrg, 'List_of_Apps_Used__c', '') + ' ' + (appsMap[sigmaId] || '')).toLowerCase();
 
     const hasAiModules =
@@ -441,7 +439,6 @@ function transformOpportunities(accountsArray) {
                                 || get(account, 'imt_Make_Lead_VE__r.Manager.Email');
 
         // 3. DYNAMIC CLASSIFICATION ENGINE
-        // Evaluates RecordType (DeveloperName) FIRST to isolate O02 Renewals from O04 Expansions
         const sfType = get(opp, 'Type', '');
         const oppNameRaw = get(opp, 'Name', '');
         const devName = get(opp, 'RecordType.DeveloperName', '');
@@ -527,8 +524,6 @@ function transformOpportunities(accountsArray) {
             opsInPlan: get(primaryOrg, 'imt_Org_Ops_In_Plan__c', 0),
             extraOpsInPlan: get(primaryOrg, 'imt_Org_Extra_Ops_In_Plan__c', 0),
             opsLeftInPlan: get(primaryOrg, 'imt_Org_Ops_Left_In_Plan__c') 
-                || get(primaryOrg, 'imt_Org_Ops_Left_in_Plan__c')
-                || get(primaryOrg, 'imt_Org_Ops_Left__c')
                 || Math.max(0, get(primaryOrg, 'imt_Org_Ops_Left_In_Plan_w_Extra__c', 0) - get(primaryOrg, 'imt_Org_Extra_Ops_In_Plan__c', 0)),
             opsLeftInPlanWithExtra: get(primaryOrg, 'imt_Org_Ops_Left_In_Plan_w_Extra__c', 0),
             expConsumption: mmsExpConsumptionPct !== null
