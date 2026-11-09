@@ -355,6 +355,46 @@ function transformOpportunities(accountsArray) {
 
     const overallTrend = total2 > 0 ? Math.round(((totalL - total2) / total2) * 100) : 0;
 
+    // --- AI ADOPTION GAP CALCULATION ---
+    // Recovered from an uncommitted draft that computed these correctly but
+    // wired them into the (now-removed) mondayDataJson sub-object instead of
+    // the real top-level push -- same mistake as the earlier celonisBusinessUnit
+    // bug. Fixed here: the draft used appsMap[orgIdRaw], but the live appsMap
+    // is keyed by sigmaId (the m_-prefixed form) at both its other call sites
+    // (listOfAppsUsed, appsSourceMismatch below) -- orgIdRaw would have always
+    // missed.
+    const appsString = (get(primaryOrg, 'List_of_Apps_Used__c', '') + ' ' + (appsMap[sigmaId] || '')).toLowerCase();
+
+    const hasAiModules =
+        appsString.includes('ai-agent') ||
+        appsString.includes('local-ai-agent') ||
+        appsString.includes('ai-tools') ||
+        appsString.includes('openai') ||
+        appsString.includes('anthropic') ||
+        appsString.includes('gemini') ||
+        appsString.includes('perplexity');
+
+    const hasAiAgents =
+        appsString.includes('ai-agent') ||
+        appsString.includes('local-ai-agent') ||
+        sfUsers.some(u => String(u.USER_GOAL).toLowerCase() === 'ai') ||
+        sfAcademy.some(u =>
+            String(u.USER_GOAL || u.userGoal).toLowerCase() === 'ai' ||
+            (u.COURSES_COMPLETED && String(u.COURSES_COMPLETED).toLowerCase().includes('ai agent')) ||
+            (u.BADGES_EARNED && String(u.BADGES_EARNED).toLowerCase().includes('ai agent'))
+        );
+
+    const creditTrendStr = overallTrend < 0 ? 'decreasing' : (overallTrend > 0 ? 'increasing' : 'flat');
+
+    const currScenarios = get(primaryOrg, 'imt_Org_Active_Scenarios_Curr_Month__c', 0);
+    const prevScenarios = get(primaryOrg, 'imt_Org_Active_Scenarios_Prev_Month__c', 0);
+    const scenariosTrendStr = (currScenarios - prevScenarios) < 0 ? 'decreasing' : ((currScenarios - prevScenarios) > 0 ? 'increasing' : 'flat');
+
+    const execRoles = ['founder', 'c-level', 'vp', 'director', 'head'];
+    const hasExecSponsor = sfUsers.some(u => execRoles.some(r => String(u.USER_JOB_ROLE).toLowerCase().includes(r))) ||
+                           sfAcademy.some(u => execRoles.some(r => String(u.USER_JOB_ROLE || u.userJobRole).toLowerCase().includes(r)));
+    // ------------------------------------
+
     const priorityVal = calculateManagementPriority(
         get(account, 'Next_Renewal_Date__c'),
         get(primaryOrg, 'imt_Exp_Consumption_End_Val_Period__c', 0),
@@ -542,6 +582,11 @@ function transformOpportunities(accountsArray) {
 
             oppType: preciseOppType,
             celonisBusinessUnit: celonisBU,
+            has_ai_modules: hasAiModules,
+            has_ai_agents: hasAiAgents,
+            credit_trend: creditTrendStr,
+            scenarios_trend: scenariosTrendStr,
+            has_exec_sponsor: hasExecSponsor,
             dealType: dealType,
             isMMS:    isMMS,
             recordType: ['Auto-Renewal', 'Manual Renewal'].includes(preciseOppType) ? 'O02' : 'O04',
