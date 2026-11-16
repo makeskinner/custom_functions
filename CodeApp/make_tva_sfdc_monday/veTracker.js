@@ -604,6 +604,7 @@ function transformOpportunities(accountsArray) {
             
             executiveSummary: get(opp, 'Executive_Summary__c') || "",
             notes: get(opp, 'imt_Notes__c') || "",
+            salesNotes: get(opp, 'Notes__c') || "",
             nextStep: get(opp, 'Next_Step__c') || "",
             preSalesNextSteps: get(opp, 'imt_Pre_Sales_Next_Steps__c') || "",
             preSalesConfidence: get(opp, 'imt_Pre_Sales_confidence_for_Quarter__c') || "",
