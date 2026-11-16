@@ -501,7 +501,8 @@ function transformOpportunities(accountsArray) {
             companyName: companyName,
             expansionScoreRollUp: get(account, 'Make_Expansion_Score_RollUp__c', 0), 
             
-            integromatOwner: get(account, 'Integromat_Owner__r.Name'), 
+            integromatOwner: get(account, 'Integromat_Owner__r.Name'),
+            integromatOwnerEmail: get(account, 'Integromat_Owner__r.Email'),
             leadVE: leadVE, 
             leadVEEmail: leadVEEmail,
             leadVEManager: leadVEManager, 
